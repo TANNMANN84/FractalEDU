@@ -1,7 +1,7 @@
 # Fractal EDU 2.0
 
-Fractal EDU is a comprehensive educational management suite designed for modern educators. It streamlines the lifecycle of student tracking, from deep academic analytics and diagnostic growth measures to official NESA compliance monitoring.
-
+Fractal EDU is a comprehensive educational management suite designed for modern Australian educators. It streamlines the lifecycle of student tracking, from deep academic analytics and diagnostic growth measures to official NESA compliance monitoring.
+All data is stored locally to ensure the privacy of students.
 ## 🚀 Key Modules
 
 ### 1. Junior Monitoring & Compliance

@@ -151,7 +151,11 @@ export const ProgramManager: React.FC<Props> = ({ classId }) => {
                                         <h5 className="font-bold text-slate-700 truncate">{prog.name}</h5>
                                         <p className="text-xs text-slate-500">Registered in Monitoring</p>
                                         <button 
-                                            onClick={() => storageService.triggerDownload({id: prog.fileId, name: prog.name})}
+                                            onClick={() => storageService.triggerDownload({
+                                                id: prog.fileId, name: prog.name,
+                                                incident: undefined,
+                                                type: undefined
+                                            })}
                                             className="mt-2 text-xs text-blue-600 hover:underline font-medium"
                                         >
                                             Download Flattened PDF

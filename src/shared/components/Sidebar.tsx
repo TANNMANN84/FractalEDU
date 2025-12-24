@@ -15,8 +15,7 @@ import {
 
 export const Sidebar: React.FC = () => {
   const navItems = [
-    { name: 'Students', path: '/profiler', icon: Users },
-    { name: 'Classes', path: '/classes', icon: Layout },
+    { name: 'Classes & Students', path: '/classes', icon: Users },
     { name: 'Exam Analytics', path: '/analytics', icon: BarChart2 },
     { name: 'Pre/Post Diagnostics', path: '/diagnostics', icon: TrendingUpDown },
     { name: 'Junior Monitoring', path: '/monitoring', icon: ClipboardCheck  },

@@ -6,12 +6,15 @@ import { Student, RapidTest, RapidResult, Exam } from '@/types';
 interface ReportOptions {
     type: 'general' | 'hpge' | 'literacy' | 'numeracy' | 'academic' | 'nccd';
     nccdFrequency?: string;
+    terms?: string[];
+    includeEvidence?: boolean;
 }
 
 interface AssessmentContext {
     rapidTests: RapidTest[];
     rapidResults: RapidResult[];
     exams: Exam[];
+    results?: any[];
 }
 
 const renderGrowthCharts = (
@@ -127,6 +130,72 @@ const renderGrowthCharts = (
     return currentY + 10;
 };
 
+const renderExamCharts = (
+    doc: jsPDF, 
+    student: Student, 
+    context: AssessmentContext, 
+    startY: number
+): number => {
+    // 1. Prepare Data
+    const studentResults = context.results?.filter(r => r.studentId === student.id) || [];
+    
+    if (studentResults.length === 0) return startY;
+
+    // 2. Setup Chart Canvas
+    doc.setFontSize(12);
+    doc.setTextColor(0);
+    doc.text("Formal Assessment Results", 14, startY);
+    
+    let currentY = startY + 10;
+    const barHeight = 8;
+    const maxBarWidth = 100;
+    const startX = 50; // Labels on left
+
+    // 3. Render Vector Charts
+    studentResults.forEach(res => {
+        const exam = context.exams.find(e => e.id === res.examId);
+        if (!exam) return;
+
+        // Check page break
+        if (currentY > 270) {
+            doc.addPage();
+            currentY = 20;
+        }
+
+        const max = exam.maxMarks || 100;
+        const score = res.score || 0;
+        const percentage = Math.min(100, Math.max(0, Math.round((score / max) * 100)));
+
+        // Label
+        doc.setFontSize(9);
+        doc.setTextColor(60);
+        doc.text(`${exam.title} (${new Date(exam.date).toLocaleDateString()})`, 14, currentY + 6);
+
+        // Background Track
+        doc.setFillColor(241, 245, 249); // Slate 100
+        doc.roundedRect(startX, currentY, maxBarWidth, barHeight, 1, 1, 'F');
+
+        // Score Bar (Indigo)
+        doc.setFillColor(99, 102, 241); // Indigo 500
+        const width = (percentage / 100) * maxBarWidth;
+        doc.roundedRect(startX, currentY, width, barHeight, 1, 1, 'F');
+
+        // Text Label
+        doc.setFontSize(8);
+        doc.setTextColor(255);
+        if (width > 12) {
+            doc.text(`${score}/${max}`, startX + 2, currentY + 5.5);
+        } else {
+            doc.setTextColor(0);
+            doc.text(`${score}/${max}`, startX + width + 2, currentY + 5.5);
+        }
+
+        currentY += 15;
+    });
+
+    return currentY + 10;
+};
+
 export const generateStudentDossier = async (
   student: Student, 
   teacherName: string, 
@@ -149,8 +218,24 @@ export const generateStudentDossier = async (
   
   let yPos = 45;
 
-  // --- STRICT EVIDENCE FILTERING ---
+  // --- FILTER BY TERM (If specified) ---
   let filteredEvidence = student.evidenceLog || [];
+
+  if (options.terms && options.terms.length > 0 && options.terms.length < 4) {
+      const getTerm = (d: Date) => {
+          const month = d.getMonth(); // 0-11
+          if (month <= 3) return '1'; // Jan-Apr
+          if (month <= 6) return '2'; // May-Jul
+          if (month <= 9) return '3'; // Aug-Oct
+          return '4'; // Nov-Dec
+      };
+      
+      filteredEvidence = filteredEvidence.filter(l => {
+          return options.terms?.includes(getTerm(new Date(l.date)));
+      });
+  }
+
+  // --- STRICT EVIDENCE FILTERING ---
   
   if (options.type === 'academic') {
       const exclusionList = ['Behaviour', 'Wellbeing', 'Cultural', 'SeatingPlan', 'Medical', 'Seating Plan'];
@@ -181,6 +266,11 @@ export const generateStudentDossier = async (
           (l.tags?.includes('NCCD') || l.type === 'NCCD' || l.tags?.includes('Learning Support')) &&
           !l.content.toLowerCase().includes('consultation')
       );
+  }
+
+  // --- FINAL EVIDENCE CHECK ---
+  if (options.includeEvidence === false) {
+      filteredEvidence = [];
   }
 
   // --- NCCD SPECIFIC LAYOUT ---
@@ -325,6 +415,7 @@ export const generateStudentDossier = async (
           // VECTOR GRAPH: Growth Charts (Academic Report Only)
           if (options.type === 'academic' && context) {
               yPos = renderGrowthCharts(doc, student, context, yPos);
+              yPos = renderExamCharts(doc, student, context, yPos);
           }
 
           // CHECK-IN ASSESSMENT DATA
@@ -367,7 +458,7 @@ export const generateStudentDossier = async (
   }
 
   // --- EVIDENCE TABLE (Shared) ---
-  if (filteredEvidence.length > 0) {
+  if (filteredEvidence.length > 0 && options.includeEvidence !== false) {
       if (options.type !== 'nccd') {
           doc.setFontSize(14);
           doc.setTextColor(0);
@@ -391,7 +482,7 @@ export const generateStudentDossier = async (
           styles: { fontSize: 9, cellPadding: 3, overflow: 'linebreak' },
           columnStyles: { 2: { cellWidth: 'auto' } }
       });
-  } else {
+  } else if (options.includeEvidence !== false) {
       doc.setFontSize(10);
       doc.setTextColor(100);
       doc.text("No matching evidence logs found.", 14, yPos);

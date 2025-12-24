@@ -27,10 +27,11 @@ export const CreateClassModal: React.FC<CreateClassModalProps> = ({ onClose }) =
       name: name.trim(),
       subject: subject.trim(),
       yearLevel: yearLevel,
-      teacherId: teacher.trim() || 'Current Teacher', 
+      teacherId: teacher.trim() || 'Current Teacher',
       studentIds: [],
       seatingPlans: [],
       status: 'Active',
+      yearGroup: ''
     };
 
     addClass(newClass);

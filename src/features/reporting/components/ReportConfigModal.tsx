@@ -138,14 +138,14 @@ export const ReportConfigModal: React.FC<Props> = ({ type, onClose }) => {
           if (!doc) throw new Error("No monitoring document found for this class.");
           
           fileName = `${cls.name}_Monitoring_Term${term}`;
-          setStatusText('Generating compliance certificate...');
+          setStatusText('Generating Junior Monitoring Report...');
           
-          const monBlob = await generateMonitoringReport(doc, cls, term as any);
+          const classStudents = students.filter(s => cls.studentIds.includes(s.id));
+          const monBlob = await generateMonitoringReport(doc, cls, classStudents, term as any);
           
           if (term === 'whole-year') {
               setStatusText('Appending Class Report...');
               // Generate Class Report
-              const classStudents = students.filter(s => cls.studentIds.includes(s.id));
               const classBlob = await generateClassReport(
                   cls, 
                   classStudents, 

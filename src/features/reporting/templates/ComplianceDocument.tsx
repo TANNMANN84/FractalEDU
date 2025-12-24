@@ -40,7 +40,7 @@ export const ComplianceDocument: React.FC<Props> = ({ doc, classGroup, term, tea
     return (
       <Document>
         <Page size="A4" style={styles.page}>
-          <Text style={styles.title}>Junior Monitoring Certificate</Text>
+          <Text style={styles.title}>Junior Monitoring Report</Text>
           <Text style={styles.subTitle}>{classGroup.name} • {classGroup.subject} • Term {term} {doc.year}</Text>
 
           <View style={styles.box}>

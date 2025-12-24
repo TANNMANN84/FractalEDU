@@ -51,14 +51,12 @@ export const ClassSummaryDocument: React.FC<Props> = ({ classGroup, students }) 
               <View style={styles.tableColName}><Text style={styles.tableCell}>Name</Text></View>
               <View style={styles.tableCol}><Text style={styles.tableCell}>Cohort</Text></View>
               <View style={styles.tableCol}><Text style={styles.tableCell}>Support Level</Text></View>
-              <View style={styles.tableCol}><Text style={styles.tableCell}>Wellbeing</Text></View>
             </View>
             {students.map(s => (
                 <View style={styles.tableRow} key={s.id}>
                     <View style={styles.tableColName}><Text style={styles.tableCell}>{s.name}</Text></View>
                     <View style={styles.tableCol}><Text style={styles.tableCell}>{s.cohort}</Text></View>
                     <View style={styles.tableCol}><Text style={styles.tableCell}>{s.support.level}</Text></View>
-                    <View style={styles.tableCol}><Text style={styles.tableCell}>{s.wellbeing.status}</Text></View>
                 </View>
             ))}
           </View>

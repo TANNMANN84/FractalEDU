@@ -14,9 +14,42 @@ export const SplitEntryView: React.FC<SplitEntryViewProps> = ({ exam }) => {
     const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
 
+    const examCohort = useMemo(() => (exam as any).cohort || (exam as any).yearLevel || (exam as any).yearGroup, [exam]);
+
+    const availableClasses = useMemo(() => {
+        if (!examCohort) return classes;
+        const examCohortNum = examCohort.toString().replace(/\D/g, '');
+        if (!examCohortNum) return classes;
+
+        return classes.filter(c => {
+            const cYear = (c as any).yearGroup || (c as any).year;
+            if (cYear) {
+                const cYearNum = cYear.toString().replace(/\D/g, '');
+                if (cYearNum === examCohortNum) return true;
+            }
+            
+            const match = c.name.match(/^(\d+)/);
+            if (match && match[1] === examCohortNum) {
+                return true;
+            }
+
+            return false;
+        });
+    }, [classes, examCohort]);
+
     // Derived Lists
     const visibleStudents = useMemo(() => {
-        let list = [...students];
+        let list = students;
+        if (examCohort) {
+            const examCohortNum = examCohort.toString().replace(/\D/g, '');
+            if (examCohortNum) {
+                list = list.filter(s => {
+                    if (!s.cohort) return false;
+                    const studentCohortNum = s.cohort.toString().replace(/\D/g, '');
+                    return studentCohortNum === examCohortNum;
+                });
+            }
+        }
         if (selectedClassId !== 'all') {
             const cls = classes.find(c => c.id === selectedClassId);
             if (cls) list = list.filter(s => cls.studentIds.includes(s.id));
@@ -26,7 +59,7 @@ export const SplitEntryView: React.FC<SplitEntryViewProps> = ({ exam }) => {
             list = list.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()));
         }
         return list.sort((a, b) => a.name.localeCompare(b.name));
-    }, [students, classes, selectedClassId, searchTerm]);
+    }, [students, classes, selectedClassId, searchTerm, examCohort]);
 
     // Auto-select first
     useEffect(() => {
@@ -70,7 +103,7 @@ export const SplitEntryView: React.FC<SplitEntryViewProps> = ({ exam }) => {
                             className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none shadow-sm"
                         >
                             <option value="all">All Classes</option>
-                            {classes.map(c => (
+                            {availableClasses.map(c => (
                                 <option key={c.id} value={c.id}>{c.name}</option>
                             ))}
                         </select>

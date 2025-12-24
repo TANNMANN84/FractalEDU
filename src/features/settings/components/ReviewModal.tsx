@@ -62,11 +62,19 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({ packageData, onClose }
                 window.open(url, '_blank');
             } catch (e) {
                 console.error("Failed to open embedded file, falling back to local storage", e);
-                storageService.triggerDownload({ id: fileId, name: fileName });
+                storageService.triggerDownload({
+                    id: fileId, name: fileName,
+                    incident: undefined,
+                    type: undefined
+                });
             }
         } else {
             // Fallback for local-only packages
-            storageService.triggerDownload({ id: fileId, name: fileName });
+            storageService.triggerDownload({
+                id: fileId, name: fileName,
+                incident: undefined,
+                type: undefined
+            });
         }
     };
 

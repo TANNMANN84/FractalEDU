@@ -24,7 +24,9 @@ export const parseLegacyData = (json: any): { exam: Exam, students: Student[], r
         cohort: rawExam.cohort || '12',
         totalMarks: rawExam.totalMarks || calculatedTotal,
         questions: questions,
-        syllabusId: rawExam.syllabusId || 'chemistry'
+        syllabusId: rawExam.syllabusId || 'chemistry',
+        title: undefined,
+        maxMarks: 0
     };
 
     // 3. Parse Students & Results (for Analysis mode)

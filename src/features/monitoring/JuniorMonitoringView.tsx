@@ -723,7 +723,11 @@ const TaskFileSlot = ({ label, file, onUpload, onRemove, variant = 'standard' }:
                         reader.onload = async () => {
                             const id = `mon-${crypto.randomUUID()}`;
                             await storageService.saveFileContent(id, reader.result as string);
-                            onUpload({ id, name: f.name });
+                            onUpload({
+                                id, name: f.name,
+                                incident: undefined,
+                                type: undefined
+                            });
                         };
                     }} 
                 />

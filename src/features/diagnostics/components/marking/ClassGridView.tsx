@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { RapidTest, Student, RapidResult } from '@/types';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, ArrowDown, ArrowRight } from 'lucide-react';
 
 interface ClassGridViewProps {
   test: RapidTest;
@@ -17,6 +17,7 @@ export const ClassGridView: React.FC<ClassGridViewProps> = ({
   results,
   onSaveData
 }) => {
+  const [progressionDirection, setProgressionDirection] = useState<'down' | 'right'>('right');
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const focusInput = (sIdx: number, qIdx: number) => {
@@ -34,13 +35,17 @@ export const ClassGridView: React.FC<ClassGridViewProps> = ({
   const handleKeyDown = (e: React.KeyboardEvent, sIdx: number, qIdx: number) => {
       if (e.key === 'ArrowUp') { e.preventDefault(); focusInput(sIdx - 1, qIdx); }
       if (e.key === 'ArrowDown' || e.key === 'Enter') { e.preventDefault(); focusInput(sIdx + 1, qIdx); }
-      if (e.key === 'ArrowLeft') { 
-          // e.preventDefault(); focusInput(sIdx, qIdx - 1); // Optional: Standard nav
-      }
-      if (e.key === 'ArrowRight') { 
-          // e.preventDefault(); focusInput(sIdx, qIdx + 1); 
-      }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); focusInput(sIdx, qIdx - 1); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); focusInput(sIdx, qIdx + 1); }
   };
+
+  const advanceFocus = (sIdx: number, qIdx: number) => {
+    if (progressionDirection === 'down') {
+      focusInput(sIdx + 1, qIdx);
+    } else {
+      focusInput(sIdx, qIdx + 1);
+    }
+  }
 
   const handleChange = (studentId: string, questionId: string, value: string, maxMarks: number, type: string, sIdx: number, qIdx: number) => {
       // 1. Determine Score & Response based on type
@@ -48,34 +53,49 @@ export const ClassGridView: React.FC<ClassGridViewProps> = ({
       let response = value;
 
       if (type === 'MCQ') {
-          // Auto-caps
-          response = value.toUpperCase().slice(0, 1);
-          // Determine score if we have correct answer
-          const q = test.questions.find(q => q.id === questionId);
-          if (q?.correctAnswer) {
-              score = response === q.correctAnswer ? maxMarks : 0;
+          const key = value.slice(-1).toLowerCase(); // Get last char to handle rapid typing/replacement
+          if (['a', 'b', 'c', 'd'].includes(key)) {
+              response = key.toUpperCase();
+              const q = test.questions.find(q => q.id === questionId);
+              score = (q?.correctAnswer && response === q.correctAnswer) ? maxMarks : 0;
+              advanceFocus(sIdx, qIdx);
+          } else {
+              return; // Ignore other keys
           }
-          // Auto advance on single char entry
-          if (response.length === 1) {
-              focusInput(sIdx + 1, qIdx); 
-          }
-      } else if (type === 'Spelling' || type === 'Matching') {
-           // For grid view, we might just assume marks unless we want full text
-           // Let's assume text entry.
-           // Score logic: If exact match?
-           const q = test.questions.find(q => q.id === questionId);
-           if (q?.correctAnswer && value.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase()) {
-               score = maxMarks;
-           }
+      } else if (type === 'Spelling' || type === 'Matching') { 
+            const key = value.slice(-1).toLowerCase();
+            if (key === 'c') {
+                score = maxMarks;
+                response = 'Correct';
+                advanceFocus(sIdx, qIdx);
+            } else if (key === 'i' || key === 'x') {
+                score = 0;
+                response = 'Incorrect';
+                advanceFocus(sIdx, qIdx);
+            } else {
+                return; // Ignore other keys
+            }
       } else {
            // Numeric
            score = parseFloat(value);
-           if (isNaN(score)) score = 0;
-           if (score > maxMarks) return; // Cap
+           if (isNaN(score) || score < 0 || score > maxMarks) return; // Cap
            response = value;
+           // For numeric, we don't auto-advance on type, but on Enter key press
+           // The onKeyDown handler for 'Enter' will handle the focus change.
       }
 
       onSaveData(studentId, questionId, score, response);
+  };
+
+  const handleNumericKeyDown = (e: React.KeyboardEvent, sIdx: number, qIdx: number) => {
+    // Standard navigation
+    handleKeyDown(e, sIdx, qIdx);
+    
+    // Advance on Enter
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      advanceFocus(sIdx, qIdx);
+    }
   };
 
   if (students.length === 0) {
@@ -89,11 +109,29 @@ export const ClassGridView: React.FC<ClassGridViewProps> = ({
 
   return (
     <div className="flex-1 bg-white overflow-hidden flex flex-col">
+       {/* Toolbar for Progression Controls */}
+       <div className="flex items-center justify-between px-4 py-2 bg-slate-50 border-b border-slate-200 shrink-0">
+           <span className="text-xs font-bold text-slate-500 uppercase">Rapid Entry Grid</span>
+           <div className="flex items-center gap-2">
+               <span className="text-xs text-slate-500 font-medium">Auto-advance:</span>
+               <div className="flex bg-white border border-slate-200 rounded-lg p-0.5 shadow-sm">
+                   <button onClick={() => setProgressionDirection('down')} className={`p-1.5 rounded ${progressionDirection === 'down' ? 'bg-brand-50 text-brand-600' : 'text-slate-400 hover:text-slate-600'}`} title="Down (Next Student)">
+                       <ArrowDown className="w-3.5 h-3.5" />
+                   </button>
+                   <button onClick={() => setProgressionDirection('right')} className={`p-1.5 rounded ${progressionDirection === 'right' ? 'bg-brand-50 text-brand-600' : 'text-slate-400 hover:text-slate-600'}`} title="Right (Next Question)">
+                       <ArrowRight className="w-3.5 h-3.5" />
+                   </button>
+               </div>
+           </div>
+       </div>
+
        <div className="overflow-auto flex-1">
-           <table className="w-full text-sm border-collapse">
+           <table className="w-full text-sm border-collapse table-fixed">
                <thead className="bg-slate-50 sticky top-0 z-20 shadow-sm">
                    <tr>
-                       <th className="p-3 text-left font-bold text-slate-700 border-b border-r border-slate-200 sticky left-0 bg-slate-50 min-w-[200px] z-30">Student</th>
+                       <th className="p-3 text-left font-bold text-slate-700 border-b border-r border-slate-200 sticky left-0 bg-slate-50 min-w-[200px] z-30 shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">
+                           Student
+                       </th>
                        {test.questions.map((q, idx) => (
                            <th key={q.id} className="p-2 text-center font-medium text-slate-600 border-b border-r border-slate-200 min-w-[100px]">
                                <div className="flex flex-col items-center">
@@ -103,7 +141,7 @@ export const ClassGridView: React.FC<ClassGridViewProps> = ({
                                </div>
                            </th>
                        ))}
-                       <th className="p-3 text-center font-bold text-slate-700 border-b border-slate-200 bg-slate-50">Total</th>
+                       <th className="p-3 text-center font-bold text-slate-700 border-b border-slate-200 bg-slate-50 w-[80px]">Total</th>
                    </tr>
                </thead>
                <tbody>
@@ -116,34 +154,75 @@ export const ClassGridView: React.FC<ClassGridViewProps> = ({
 
                        return (
                            <tr key={student.id} className="hover:bg-slate-50 group">
-                               <td className="p-3 font-medium text-slate-700 border-r border-b border-slate-100 sticky left-0 bg-white group-hover:bg-slate-50 z-10">
+                               <td className="p-3 font-medium text-slate-700 border-r border-b border-slate-200 sticky left-0 bg-white group-hover:bg-slate-50 z-10">
                                    {student.name}
                                </td>
                                {test.questions.map((q, qIdx) => {
-                                   const val = responses?.[q.id] || (scores?.[q.id] !== undefined ? scores?.[q.id] : '') || '';
-                                   const key = `${student.id}-${q.id}`;
-                                   const isCorrect = q.correctAnswer && String(val).toUpperCase() === q.correctAnswer;
+                                   const isNumeric = q.type === 'Marks' || q.type === 'Written';
                                    
+                                   // Get raw values
+                                   const scoreVal = scores?.[q.id];
+                                   const responseVal = responses?.[q.id];
+                                   
+                                   // Determine display value
+                                   let displayVal: string | number = '';
+                                   if (isNumeric) {
+                                       displayVal = scoreVal !== undefined ? scoreVal : '';
+                                   } else {
+                                       displayVal = responseVal || '';
+                                   }
+
+                                   const key = `${student.id}-${q.id}`;
                                    let cellBg = 'bg-white';
-                                   if (q.type === 'MCQ' && val) {
-                                       cellBg = isCorrect ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700';
+
+                                   // Logic for coloring
+                                   if (isNumeric && scoreVal !== undefined) {
+                                       if (Number(scoreVal) === q.maxMarks) {
+                                           cellBg = 'bg-green-100 text-green-800 font-bold';
+                                       } else if (Number(scoreVal) === 0) {
+                                           cellBg = 'bg-red-100 text-red-800 font-bold';
+                                       } else {
+                                           cellBg = 'bg-orange-100 text-orange-800 font-bold';
+                                       }
+                                   } else if (q.type === 'MCQ' && responseVal) {
+                                       const isCorrect = q.correctAnswer && String(responseVal).trim().toUpperCase() === String(q.correctAnswer).trim().toUpperCase();
+                                       cellBg = isCorrect ? 'bg-green-100 text-green-800 font-bold' : 'bg-red-100 text-red-800 font-bold';
+                                   } else if ((q.type === 'Spelling' || q.type === 'Matching') && responseVal) {
+                                        const isCorrectBinary = (Number(scoreVal) || 0) === q.maxMarks;
+                                        cellBg = isCorrectBinary ? 'bg-green-100 text-green-800 font-bold' : 'bg-red-100 text-red-800 font-bold';
+                                        // Map words to symbols for display
+                                        if (responseVal === 'Correct') displayVal = '✓';
+                                        if (responseVal === 'Incorrect') displayVal = '✗';
                                    }
 
                                    return (
-                                       <td key={q.id} className="p-1 border-r border-b border-slate-100 text-center">
+                                       <td key={q.id} className="p-0 border-r border-b border-slate-200 text-center">
                                            <input 
                                                 ref={el => { inputRefs.current[key] = el; }}
                                                 type="text"
-                                                value={val}
-                                                onChange={(e) => handleChange(student.id, q.id, e.target.value, q.maxMarks, q.type, sIdx, qIdx)}
-                                                onKeyDown={(e) => handleKeyDown(e, sIdx, qIdx)}
-                                                className={`w-full text-center p-2 rounded outline-none focus:ring-2 focus:ring-brand-500 transition-colors ${cellBg}`}
+                                                value={displayVal}
+                                                onChange={(e) => {
+                                                    // For non-numeric, handle change directly. For numeric, it's just a standard input.
+                                                    if (!isNumeric) {
+                                                        handleChange(student.id, q.id, e.target.value, q.maxMarks, q.type, sIdx, qIdx);
+                                                    } else {
+                                                        const val = parseFloat(e.target.value);
+                                                        if (!isNaN(val)) {
+                                                            onSaveData(student.id, q.id, val, e.target.value);
+                                                        } else if (e.target.value === '') {
+                                                            // Handle clear
+                                                            onSaveData(student.id, q.id, 0, '');
+                                                        }
+                                                    }
+                                                }}
+                                                onKeyDown={(e) => isNumeric ? handleNumericKeyDown(e, sIdx, qIdx) : handleKeyDown(e, sIdx, qIdx)}
+                                                className={`w-full h-full text-center p-2 outline-none focus:ring-2 focus:ring-brand-500 ${cellBg}`}
                                                 placeholder="-"
                                            />
                                        </td>
                                    );
                                })}
-                               <td className="p-3 text-center font-bold text-slate-800 bg-slate-50/30 border-b border-slate-100">
+                               <td className="p-3 text-center font-bold text-slate-800 bg-slate-50/30 border-b border-slate-200">
                                    {totalScore}
                                </td>
                            </tr>

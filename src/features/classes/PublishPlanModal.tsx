@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Check, User, Info } from 'lucide-react';
+import { X, Check, User, Info, Image as ImageIcon } from 'lucide-react';
 import { Student } from '@/types';
 
 interface PublishPlanModalProps {
@@ -8,6 +8,7 @@ interface PublishPlanModalProps {
   onConfirm: (generalNote: string, studentNotes: Record<string, string>) => void;
   seatedStudents: Student[];
   planName: string;
+  imagePreview?: string;
 }
 
 export const PublishPlanModal: React.FC<PublishPlanModalProps> = ({
@@ -15,7 +16,8 @@ export const PublishPlanModal: React.FC<PublishPlanModalProps> = ({
   onClose,
   onConfirm,
   seatedStudents,
-  planName
+  planName,
+  imagePreview
 }) => {
   const [generalNote, setGeneralNote] = useState('New seating arrangement.');
   const [studentNotes, setStudentNotes] = useState<Record<string, string>>({});
@@ -51,6 +53,18 @@ export const PublishPlanModal: React.FC<PublishPlanModalProps> = ({
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           
+          {/* Plan Snapshot Preview */}
+          {imagePreview && (
+            <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+              <div className="flex items-center gap-2 mb-2">
+                  <ImageIcon className="w-4 h-4 text-brand-500" />
+                  <label className="text-sm font-bold text-slate-700">Plan Snapshot</label>
+              </div>
+              <img src={imagePreview} alt="Seating Plan Layout" className="w-full h-auto rounded-lg border border-slate-300 shadow-sm bg-white" />
+              <p className="text-xs text-slate-400 mt-2 text-center">This image will be saved to the evidence log for all students.</p>
+            </div>
+          )}
+
           {/* General Note */}
           <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
             <div className="flex items-center gap-2 mb-2">

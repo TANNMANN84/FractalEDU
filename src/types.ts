@@ -88,7 +88,10 @@ export interface SupportData {
   strategies: string[];
 }
 
-export interface FileUpload { id: string; name: string; }
+export interface FileUpload {
+    incident: any;
+    type: any; id: string; name: string; 
+}
 
 export interface EvidenceLogEntry {
   id: string;
@@ -213,6 +216,7 @@ export interface ClassProgram {
 }
 
 export interface ClassGroup {
+  yearGroup: string;
   id: UUID;
   name: string;
   subject: string;
@@ -243,6 +247,8 @@ export interface Question {
 }
 
 export interface Exam {
+  title: any;
+  maxMarks: number;
   id: UUID;
   name: string;
   date: string;
@@ -299,7 +305,8 @@ export interface TermBased<T> { '1': T; '2': T; '3': T; '4': T; }
 export interface WorkSampleScans { top: FileUpload | null; middle: FileUpload | null; low: FileUpload | null; }
 
 export type ConcernCategory = 'Illness/Misadventure' | 'N-Warning' | 'Malpractice' | 'Other';
-export interface ConcernEntry { 
+export interface ConcernEntry {
+    name: any; 
     id: string; 
     file: FileUpload; 
     studentIds: string[]; 
@@ -323,6 +330,8 @@ export interface AssessmentItem {
 
 export interface TermSignOff { teacherName: string; date: string; signatureImage?: string; }
 export interface MonitoringDoc {
+    behaviorNotes: string;
+    academicNotes: string;
     id: string; classId: string; year: number; certifySyllabus: boolean; scopeAndSequence: FileUpload | null;
     teachingPrograms: TermBased<FileUpload[]>; semesterReports: TermBased<FileUpload | null>; assessmentSchedule: FileUpload | null;
     assessments?: TermBased<AssessmentItem[]>;

@@ -21,16 +21,18 @@ export const BLANK_MONITORING_DOC_SKELETON: Omit<MonitoringDoc, 'id' | 'classId'
     studentsCausingConcern: { '1': [], '2': [], '3': [], '4': [] },
     illnessMisadventure: { '1': [], '2': [], '3': [], '4': [] },
     malpractice: { '1': [], '2': [], '3': [], '4': [] },
-    teacherSignOff: { 
-        '1': { teacherName: '', date: null }, 
-        '2': { teacherName: '', date: null }, 
-        '3': { teacherName: '', date: null }, 
-        '4': { teacherName: '', date: null } 
+    teacherSignOff: {
+        '1': { teacherName: '', date: null },
+        '2': { teacherName: '', date: null },
+        '3': { teacherName: '', date: null },
+        '4': { teacherName: '', date: null }
     },
-    headTeacherSignOff: { 
-        '1': { teacherName: '', date: null }, 
-        '2': { teacherName: '', date: null }, 
-        '3': { teacherName: '', date: null }, 
-        '4': { teacherName: '', date: null } 
+    headTeacherSignOff: {
+        '1': { teacherName: '', date: null },
+        '2': { teacherName: '', date: null },
+        '3': { teacherName: '', date: null },
+        '4': { teacherName: '', date: null }
     },
+    behaviorNotes: '',
+    academicNotes: ''
 };

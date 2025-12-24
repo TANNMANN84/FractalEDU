@@ -1,4 +1,3 @@
-
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { ClassGroup, Student, RapidTest, RapidResult, Exam } from '@/types';
@@ -17,22 +16,39 @@ export const generateClassReport = async (
 ): Promise<Blob> => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.width;
+  const pageHeight = doc.internal.pageSize.height;
+  const margin = 14;
 
-  // Header
-  doc.setFontSize(18);
-  doc.text(`${classGroup.name} - Class Report`, 14, 20);
+  // --- BRANDING HEADER ---
+  doc.setFillColor(16, 185, 129); // Emerald 500
+  doc.rect(0, 0, pageWidth, 40, 'F');
+  
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(22);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`${classGroup.name} Report`, margin, 20);
+  
   doc.setFontSize(10);
-  doc.setTextColor(100);
-  doc.text(`Subject: ${classGroup.subject} | Generated: ${new Date().toLocaleDateString()}`, 14, 26);
-  doc.line(14, 30, pageWidth - 14, 30);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Subject: ${classGroup.subject} | Generated: ${new Date().toLocaleDateString()}`, margin, 30);
 
-  let yPos = 40;
+  let yPos = 55;
 
   if (type === 'statistics') {
+      // --- STATISTICS SECTION ---
       doc.setFontSize(14);
-      doc.setTextColor(0);
-      doc.text("Class Statistics Overview", 14, yPos);
+      doc.setTextColor(16, 185, 129);
+      doc.setFont('helvetica', 'bold');
+      doc.text("Class Statistics Overview", margin, yPos);
+      yPos += 8;
+      
+      doc.setDrawColor(16, 185, 129);
+      doc.setLineWidth(0.5);
+      doc.line(margin, yPos, pageWidth - margin, yPos);
       yPos += 10;
+
+      doc.setTextColor(30);
+      doc.setFont('helvetica', 'normal');
 
       // Stats Calculation
       const total = students.length;
@@ -58,13 +74,14 @@ export const generateClassReport = async (
           head: [['Metric', 'Count']],
           body: statsData,
           theme: 'grid',
-          headStyles: { fillColor: [22, 163, 74] }
+          headStyles: { fillColor: [16, 185, 129], fontStyle: 'bold' },
+          styles: { fontSize: 10, cellPadding: 4 }
       });
 
       yPos = (doc as any).lastAutoTable.finalY + 15;
 
       // NCCD Breakdown
-      doc.text("NCCD Breakdown", 14, yPos);
+      doc.text("NCCD Breakdown", margin, yPos);
       yPos += 6;
       
       const levels = { 'QDTP': 0, 'Supplementary': 0, 'Substantial': 0, 'Extensive': 0 };
@@ -80,16 +97,24 @@ export const generateClassReport = async (
           startY: yPos,
           head: [['Level of Adjustment', 'Students']],
           body: nccdBody,
-          theme: 'striped'
+          theme: 'striped',
+          headStyles: { fillColor: [100, 116, 139] }
       });
 
   } else {
       // --- SECTION 1: COHORT GROWTH GRAPHS (VECTOR ENGINE) ---
       if (context && context.rapidTests.length > 0) {
           doc.setFontSize(14);
-          doc.setTextColor(0);
-          doc.text("1. Cohort Growth Analytics", 14, yPos);
+          doc.setTextColor(16, 185, 129);
+          doc.setFont('helvetica', 'bold');
+          doc.text("1. Cohort Growth Analytics", margin, yPos);
+          yPos += 8;
+          
+          doc.setDrawColor(16, 185, 129);
+          doc.line(margin, yPos, pageWidth - margin, yPos);
           yPos += 10;
+
+          doc.setTextColor(30);
 
           const studentIds = students.map(s => s.id);
           const growthData = context.rapidTests.map(test => {
@@ -136,7 +161,7 @@ export const generateClassReport = async (
 
                   doc.setFontSize(9);
                   doc.setTextColor(60);
-                  doc.text(`${pt.name} (n=${pt.count})`, 14, yPos + 6);
+                  doc.text(`${pt.name} (n=${pt.count})`, margin, yPos + 6);
 
                   // Track
                   doc.setFillColor(241, 245, 249);
@@ -176,16 +201,21 @@ export const generateClassReport = async (
           } else {
               doc.setFontSize(10);
               doc.setTextColor(150);
-              doc.text("No diagnostic data recorded for this class.", 14, yPos);
+              doc.text("No diagnostic data recorded for this class.", margin, yPos);
               yPos += 15;
           }
       }
 
       // --- SECTION 2: EXTERNAL MEASURES ---
       doc.setFontSize(14);
-      doc.setTextColor(0);
-      doc.text("2. External Measures", 14, yPos);
+      doc.setTextColor(16, 185, 129);
+      doc.setFont('helvetica', 'bold');
+      doc.text("2. External Measures", margin, yPos);
       yPos += 8;
+      
+      doc.setDrawColor(16, 185, 129);
+      doc.line(margin, yPos, pageWidth - margin, yPos);
+      yPos += 10;
 
       // Helper to count bands
       const countBands = (year: 'year7' | 'year9', domain: string) => {
@@ -202,7 +232,7 @@ export const generateClassReport = async (
       // NAPLAN Summary
       doc.setFontSize(12);
       doc.setTextColor(60);
-      doc.text("NAPLAN Distribution (Year 9)", 14, yPos);
+      doc.text("NAPLAN Distribution (Year 9)", margin, yPos);
       yPos += 6;
 
       const n9Read = countBands('year9', 'reading');
@@ -226,7 +256,7 @@ export const generateClassReport = async (
       yPos = (doc as any).lastAutoTable.finalY + 12;
 
       // Check-in & VALID
-      doc.text("Check-in & VALID Science Averages", 14, yPos);
+      doc.text("Check-in & VALID Science Averages", margin, yPos);
       yPos += 6;
 
       let ciReadSum = 0, ciReadCount = 0;
@@ -263,9 +293,14 @@ export const generateClassReport = async (
 
       // --- INTERNAL MEASURES ---
       doc.setFontSize(14);
-      doc.setTextColor(0);
-      doc.text("3. Targeted Learning", 14, yPos);
+      doc.setTextColor(16, 185, 129);
+      doc.setFont('helvetica', 'bold');
+      doc.text("3. Targeted Learning", margin, yPos);
       yPos += 8;
+      
+      doc.setDrawColor(16, 185, 129);
+      doc.line(margin, yPos, pageWidth - margin, yPos);
+      yPos += 10;
       
       const sortedByTarget = [...students].sort((a,b) => (b.academicTarget || 0) - (a.academicTarget || 0));
       const topTarget = sortedByTarget.slice(0, 5).map(s => [s.name, s.academicTarget || '-']);
@@ -278,6 +313,15 @@ export const generateClassReport = async (
           theme: 'plain',
           headStyles: { fillColor: [100, 116, 139] }
       });
+  }
+
+  // --- FOOTER ---
+  const pageCount = (doc as any).internal.getNumberOfPages();
+  for(let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      doc.text(`Page ${i} of ${pageCount} | FractalEDU Reporting`, pageWidth / 2, pageHeight - 10, { align: 'center' });
   }
 
   return doc.output('blob');

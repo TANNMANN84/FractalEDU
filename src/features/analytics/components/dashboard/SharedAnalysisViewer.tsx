@@ -21,6 +21,20 @@ export const SharedAnalysisViewer: React.FC<SharedAnalysisViewerProps> = ({ data
     const [selectedStudentId, setSelectedStudentId] = useState<string>('all');
     const [chartType, setChartType] = useState<'bar' | 'pie'>('bar');
 
+    const filteredStudents = useMemo(() => {
+        const examCohort = (exam as any).cohort || (exam as any).yearLevel || (exam as any).yearGroup;
+        if (!examCohort) return students;
+        
+        const examCohortNum = examCohort.toString().replace(/\D/g, '');
+        if (!examCohortNum) return students;
+
+        return students.filter(s => {
+            if (!s.cohort) return false;
+            const studentCohortNum = s.cohort.toString().replace(/\D/g, '');
+            return studentCohortNum === examCohortNum;
+        });
+    }, [students, exam]);
+
     // -- Analysis Logic (Mirrors AnalysisView but uses props) --
 
     const targetResults = useMemo(() => {
@@ -108,7 +122,7 @@ export const SharedAnalysisViewer: React.FC<SharedAnalysisViewerProps> = ({ data
                             className="bg-transparent text-sm font-medium text-slate-700 outline-none"
                         >
                             <option value="all">Whole Cohort</option>
-                            {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                            {filteredStudents.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                         </select>
                     </div>
                 </div>
@@ -170,7 +184,7 @@ export const SharedAnalysisViewer: React.FC<SharedAnalysisViewerProps> = ({ data
                                         <Tooltip />
                                         <Legend />
                                         {isIndividualView && <Bar dataKey="Student" fill="#0ea5e9" radius={[0, 4, 4, 0]} />}
-                                        <Bar dataKey={isIndividualView ? "Class" : "value"} fill="#cbd5e1" radius={[0, 4, 4, 0]} name="Cohort Avg" />
+                                        <Bar dataKey={isIndividualView ? "Class" : "value"} fill={isIndividualView ? "#94a3b8" : "#6366f1"} radius={[0, 4, 4, 0]} name={isIndividualView ? "Cohort Avg" : "Average"} />
                                     </BarChart>
                                 ) : (
                                     <PieChart>
@@ -194,7 +208,7 @@ export const SharedAnalysisViewer: React.FC<SharedAnalysisViewerProps> = ({ data
                                         <Tooltip />
                                         <Legend />
                                         {isIndividualView && <Bar dataKey="Student" fill="#8b5cf6" radius={[0, 4, 4, 0]} />}
-                                        <Bar dataKey={isIndividualView ? "Class" : "value"} fill="#e2e8f0" radius={[0, 4, 4, 0]} name="Cohort Avg" />
+                                        <Bar dataKey={isIndividualView ? "Class" : "value"} fill={isIndividualView ? "#94a3b8" : "#8b5cf6"} radius={[0, 4, 4, 0]} name={isIndividualView ? "Cohort Avg" : "Average"} />
                                     </BarChart>
                                 ) : (
                                     <PieChart>
@@ -218,7 +232,7 @@ export const SharedAnalysisViewer: React.FC<SharedAnalysisViewerProps> = ({ data
                                 <Tooltip />
                                 <Legend />
                                 {isIndividualView && <Bar dataKey="Student" fill="#0ea5e9" radius={[4, 4, 0, 0]} />}
-                                <Bar dataKey={isIndividualView ? "Class" : "value"} fill="#94a3b8" radius={[4, 4, 0, 0]} name="Cohort Avg" />
+                                <Bar dataKey={isIndividualView ? "Class" : "value"} fill={isIndividualView ? "#94a3b8" : "#0ea5e9"} radius={[4, 4, 0, 0]} name={isIndividualView ? "Cohort Avg" : "Average"} />
                             </BarChart>
                         </ResponsiveContainer>
                     </ChartCard>

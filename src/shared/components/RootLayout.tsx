@@ -3,11 +3,13 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { useAppStore } from '@/store';
 import { useTheme } from '@/context/ThemeContext';
-import { Search, Sun, Moon } from 'lucide-react';
+import { Sun, Moon, CloudOff, Save, CheckCircle } from 'lucide-react';
+import { useAutoSync } from '@/hooks/useAutoSync';
 
 export const RootLayout: React.FC = () => {
   const { teacherProfile } = useAppStore();
   const { theme, setTheme } = useTheme();
+  const { isConnected, hasUnsavedChanges, saveNow, reconnect } = useAutoSync();
   const navigate = useNavigate();
   const location = useLocation();
   const isDark = theme === 'dark';
@@ -16,7 +18,6 @@ export const RootLayout: React.FC = () => {
   const getPageTitle = () => {
     const path = location.pathname;
     if (path.includes('/monitoring')) return 'Junior Monitoring';
-    if (path.includes('/profiler')) return 'Student Profiler';
     if (path.includes('/analytics')) return 'Exam Analytics';
     if (path.includes('/classes')) return 'Class Manager';
     if (path.includes('/management')) return 'Settings & Admin';
@@ -49,15 +50,30 @@ export const RootLayout: React.FC = () => {
           {/* RIGHT: Global Search & Actions */}
           <div className="flex items-center gap-3 min-w-fit">
             
-            {/* Search Bar */}
-            <div className="relative group hidden lg:block w-64">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-500 transition-colors" />
-              <input 
-                type="text" 
-                placeholder="Search..." 
-                className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-full py-1.5 pl-9 pr-4 text-sm focus:ring-2 focus:ring-brand-500 transition-all dark:text-slate-200 placeholder:text-slate-400" 
-              />
-            </div>
+            {/* Sync Controls */}
+            {!isConnected ? (
+              <button 
+                onClick={reconnect}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-full hover:bg-red-100 transition-colors dark:bg-red-900/20 dark:text-red-300 dark:border-red-800 dark:hover:bg-red-900/30"
+                title="Click to reconnect to local folder"
+              >
+                <CloudOff className="w-4 h-4" />
+                <span className="hidden sm:inline">Disconnected</span>
+              </button>
+            ) : (
+              <button 
+                onClick={saveNow}
+                className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium border rounded-full transition-all duration-200 ${
+                  hasUnsavedChanges 
+                    ? 'text-red-700 bg-red-50 border-red-200 hover:bg-red-100 dark:text-red-400 dark:bg-red-900/20 dark:border-red-800' 
+                    : 'text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-900/20 dark:border-emerald-800'
+                }`}
+                title={hasUnsavedChanges ? "Unsaved changes" : "All changes saved"}
+              >
+                {hasUnsavedChanges ? <Save className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
+                <span className="hidden sm:inline">{hasUnsavedChanges ? 'Save' : 'Synced'}</span>
+              </button>
+            )}
 
             <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
 

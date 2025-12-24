@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 
 import { useAppStore } from '@/store';
 
@@ -20,6 +20,42 @@ export const Classes: React.FC = () => {
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
+  const groupedClasses = useMemo(() => {
+    const groups: Record<string, typeof classes> = {};
+    
+    classes.forEach((cls) => {
+      // Cast to any to access potential yearGroup property if not in type
+      const c = cls as any;
+      
+      // 1. Try explicit properties (expand search to common variations)
+      let year = c.yearGroup || c.year || c.yearLevel || c.grade;
+
+      // 2. Fallback: Try to extract from class name (e.g. "Year 10 Science", "10A", "7B")
+      if (!year && c.name) {
+        const yearMatch = c.name.match(/(?:Year|Yr|Grade)\s*(\d{1,2})/i);
+        if (yearMatch) {
+          year = yearMatch[1];
+        } else {
+          const leadingMatch = c.name.match(/^(\d{1,2})/);
+          if (leadingMatch) year = leadingMatch[1];
+        }
+      }
+
+      const groupKey = year || 'Other';
+      if (!groups[groupKey]) {
+        groups[groupKey] = [];
+      }
+      groups[groupKey].push(cls);
+    });
+
+    // Sort keys (years) numerically
+    return Object.entries(groups).sort((a, b) => {
+      const yearA = parseInt(a[0].replace(/\D/g, '')) || 999;
+      const yearB = parseInt(b[0].replace(/\D/g, '')) || 999;
+      return yearA - yearB;
+    });
+  }, [classes]);
+
 
 
   if (selectedClass) {
@@ -40,7 +76,7 @@ export const Classes: React.FC = () => {
 
           <h2 className="text-2xl font-bold text-slate-800">Class Management</h2>
 
-          <p className="text-slate-500">Organize seating plans and class lists.</p>
+          <p className="text-slate-500">Class and student management. Seating Plans, Student Profiles and profiling, program registration and evidence logging.</p>
 
         </div>
 
@@ -60,72 +96,7 @@ export const Classes: React.FC = () => {
 
       </div>
 
-
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-        {classes.map((cls) => (
-
-          <div
-
-            key={cls.id}
-
-            onClick={() => setSelectedClass(cls)}
-
-            className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-brand-200 transition-all group cursor-pointer"
-
-          >
-
-            <div className="flex items-center justify-between mb-4">
-
-              <div className="flex items-center gap-3">
-
-                <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-
-                  <Layout className="w-6 h-6" />
-
-                </div>
-
-                <div>
-
-                  <h3 className="font-bold text-slate-800 group-hover:text-indigo-600 transition-colors text-lg">{cls.name}</h3>
-
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{cls.subject}</p>
-
-                </div>
-
-              </div>
-
-            </div>
-
-           
-
-            <div className="flex items-center justify-between text-sm text-slate-500 border-t border-slate-100 pt-4 mt-2">
-
-              <span className="flex items-center gap-2">
-
-                <Users className="w-4 h-4" />
-
-                {cls.studentIds.length} Students
-
-              </span>
-
-              <span className="flex items-center text-brand-600 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-
-                Manage <ChevronRight className="w-4 h-4" />
-
-              </span>
-
-            </div>
-
-          </div>
-
-        ))}
-
-
-
-        {classes.length === 0 && (
-
+      {classes.length === 0 ? (
           <div className="col-span-full py-12 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">
 
              <Layout className="w-12 h-12 mb-3 opacity-20" />
@@ -135,10 +106,54 @@ export const Classes: React.FC = () => {
              <button onClick={() => setIsCreateModalOpen(true)} className="mt-2 text-brand-600 hover:underline">Create your first class</button>
 
           </div>
-
-        )}
-
-      </div>
+      ) : (
+        <div className="flex gap-6 overflow-x-auto pb-6 items-start">
+          {groupedClasses.map(([year, classList]) => (
+            <div key={year} className="min-w-[320px] w-80 flex-shrink-0 flex flex-col bg-slate-100 dark:bg-slate-900/50 rounded-xl p-4 h-fit border border-slate-200 dark:border-slate-800">
+              <div className="flex items-center justify-between mb-4 px-1">
+                <h3 className="font-bold text-slate-700 dark:text-slate-200 text-lg">
+                  {year.toString().startsWith('Year') ? year : `Year ${year}`}
+                </h3>
+                <span className="text-xs font-medium bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-1 rounded-full">
+                  {classList.length}
+                </span>
+              </div>
+              
+              <div className="space-y-3">
+                {classList.map((cls) => (
+                  <div
+                    key={cls.id}
+                    onClick={() => setSelectedClass(cls)}
+                    className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 hover:shadow-md hover:border-brand-200 transition-all group cursor-pointer"
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                          <Layout className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-slate-800 dark:text-slate-100 group-hover:text-indigo-600 transition-colors">{cls.name}</h3>
+                          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">{cls.subject}</p>
+                        </div>
+                      </div>
+                    </div>
+                  
+                    <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-700 pt-3">
+                      <span className="flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5" />
+                        {cls.studentIds.length} Students
+                      </span>
+                      <span className="flex items-center text-brand-600 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                        Manage <ChevronRight className="w-3.5 h-3.5" />
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
 
 

@@ -16,6 +16,18 @@ interface RapidAnalysisViewProps {
 export const RapidAnalysisView: React.FC<RapidAnalysisViewProps> = ({ test, onBack }) => {
   const { rapidResults, students } = useAppStore();
 
+  const availableStudents = useMemo(() => {
+    if (!test.yearGroup) return students;
+    const testYearNum = test.yearGroup.toString().replace(/\D/g, '');
+    if (!testYearNum) return students;
+
+    return students.filter(s => {
+      if (!s.cohort) return false;
+      const studentCohortNum = s.cohort.toString().replace(/\D/g, '');
+      return studentCohortNum === testYearNum;
+    });
+  }, [students, test.yearGroup]);
+
   const { 
     classAvgPre, 
     classAvgPost, 
@@ -23,7 +35,7 @@ export const RapidAnalysisView: React.FC<RapidAnalysisViewProps> = ({ test, onBa
     maxScore, 
     studentStats, 
     questionStats 
-  } = useMemo(() => calculateGrowthStats(test, rapidResults, students), [test, rapidResults, students]);
+  } = useMemo(() => calculateGrowthStats(test, rapidResults, availableStudents), [test, rapidResults, availableStudents]);
 
   // Transform for Scatter Chart
   const scatterData = studentStats.map(s => ({

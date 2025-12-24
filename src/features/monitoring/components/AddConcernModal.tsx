@@ -28,7 +28,10 @@ export const AddConcernModal: React.FC<AddConcernModalProps> = ({ isOpen, onClos
           alert("Please select at least one student and upload a file.");
           return;
       }
-      onSave({ studentIds: selectedStudentIds, file, category });
+      onSave({
+        studentIds: selectedStudentIds, file, category,
+        name: undefined
+      });
       onClose();
   };
 

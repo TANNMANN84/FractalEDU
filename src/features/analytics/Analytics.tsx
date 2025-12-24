@@ -128,7 +128,7 @@ export const Analytics: React.FC = () => {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-2xl font-bold text-slate-800">Academic Analytics</h2>
-                    <p className="text-slate-500">Manage assessments, enter data, and view reports.</p>
+                    <p className="text-slate-500">Marking assistant for examinations with full sharable report analytics.</p>
                 </div>
                 <div className="flex gap-3">
                     <button 

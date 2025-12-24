@@ -1,5 +1,6 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import html2canvas from 'html2canvas';
 import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor, DragEndEvent, useDroppable } from '@dnd-kit/core';
 import { useAppStore } from '@/store';
 import { ClassGroup, Student, SeatingPlan, EvidenceLogEntry } from '@/types';
@@ -26,6 +27,8 @@ export const SeatingPlanEditor: React.FC<Props> = ({ classGroup }) => {
     const [showGenderColor, setShowGenderColor] = useState(false);
     const [frontOfRoom, setFrontOfRoom] = useState<'top' | 'bottom'>('top');
     const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+    const captureRef = useRef<HTMLDivElement>(null);
+    const [planImage, setPlanImage] = useState<string | undefined>(undefined);
 
     // Dialog State
     const [dialog, setDialog] = useState<{ type: 'create'|'rename'|'delete'|'random'|null }>({ type: null });
@@ -153,6 +156,22 @@ export const SeatingPlanEditor: React.FC<Props> = ({ classGroup }) => {
 
     const handleRandomTrigger = () => setDialog({ type: 'random' });
 
+    const handlePublishTrigger = async () => {
+        if (captureRef.current) {
+            try {
+                const canvas = await html2canvas(captureRef.current, {
+                    scale: 2,
+                    backgroundColor: '#ffffff',
+                    logging: false
+                });
+                setPlanImage(canvas.toDataURL('image/png'));
+            } catch (e) {
+                console.error("Plan capture failed", e);
+            }
+        }
+        setIsPublishModalOpen(true);
+    };
+
     const handlePublish = (generalNote: string, studentNotes: Record<string, string>) => {
         Object.entries(seatMap).forEach(([seatKey, studentId]) => {
             const note = studentNotes[studentId as string] || generalNote;
@@ -163,7 +182,9 @@ export const SeatingPlanEditor: React.FC<Props> = ({ classGroup }) => {
                 date: new Date().toISOString(),
                 type: 'SeatingPlan',
                 content: `Seating Plan Update (${currentPlan.name}): ${note}`,
-                author: 'Current Teacher'
+                author: 'Current Teacher',
+                // @ts-ignore
+                attachment: planImage
             };
             addEvidence(studentId as string, log);
         });
@@ -234,7 +255,7 @@ export const SeatingPlanEditor: React.FC<Props> = ({ classGroup }) => {
                             <button onClick={handleSave} className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 text-sm font-medium transition-colors">
                                 <Save className="w-4 h-4"/> Save
                             </button>
-                            <button onClick={() => setIsPublishModalOpen(true)} className="flex items-center gap-2 px-3 py-1.5 bg-brand-600 text-white rounded-lg hover:bg-brand-700 text-sm font-bold shadow-sm transition-colors">
+                            <button onClick={handlePublishTrigger} className="flex items-center gap-2 px-3 py-1.5 bg-brand-600 text-white rounded-lg hover:bg-brand-700 text-sm font-bold shadow-sm transition-colors">
                                 <Share className="w-4 h-4" /> Publish
                             </button>
                         </div>
@@ -246,25 +267,27 @@ export const SeatingPlanEditor: React.FC<Props> = ({ classGroup }) => {
                     <UnseatedSidebar students={unseatedStudents} showGender={showGenderColor} />
                     
                     <div className="flex-1 overflow-auto bg-slate-100/50 p-8 flex flex-col items-center">
-                        {frontOfRoom === 'top' && (
-                            <div className="w-2/3 h-3 bg-slate-300 rounded-b-xl mb-8 shrink-0 relative shadow-inner">
-                                <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Front of Room (Board)</span>
+                        <div ref={captureRef} className="flex flex-col items-center bg-slate-50 p-6 rounded-xl border border-slate-200 shadow-sm">
+                            {frontOfRoom === 'top' && (
+                                <div className="w-2/3 h-3 bg-slate-300 rounded-b-xl mb-8 shrink-0 relative shadow-inner">
+                                    <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Front of Room (Board)</span>
+                                </div>
+                            )}
+                            
+                            <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+                                {Array.from({ length: rows }).map((_, r) => Array.from({ length: cols }).map((_, c) => {
+                                    const sId = seatMap[`${r}-${c}`];
+                                    const student = students.find(s => s.id === sId);
+                                    return <DeskCell key={`${r}-${c}`} row={r} col={c} student={student} showGender={showGenderColor} />;
+                                }))}
                             </div>
-                        )}
-                        
-                        <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
-                            {Array.from({ length: rows }).map((_, r) => Array.from({ length: cols }).map((_, c) => {
-                                const sId = seatMap[`${r}-${c}`];
-                                const student = students.find(s => s.id === sId);
-                                return <DeskCell key={`${r}-${c}`} row={r} col={c} student={student} showGender={showGenderColor} />;
-                            }))}
+                            
+                            {frontOfRoom === 'bottom' && (
+                                <div className="w-2/3 h-3 bg-slate-300 rounded-t-xl mt-8 shrink-0 relative shadow-inner">
+                                    <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Front of Room (Board)</span>
+                                </div>
+                            )}
                         </div>
-                        
-                        {frontOfRoom === 'bottom' && (
-                            <div className="w-2/3 h-3 bg-slate-300 rounded-t-xl mt-8 shrink-0 relative shadow-inner">
-                                <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Front of Room (Board)</span>
-                            </div>
-                        )}
                     </div>
                 </div>
                 
@@ -287,6 +310,7 @@ export const SeatingPlanEditor: React.FC<Props> = ({ classGroup }) => {
                     onConfirm={handlePublish}
                     seatedStudents={classStudents.filter(s => seatedIds.includes(s.id))}
                     planName={currentPlan.name}
+                    imagePreview={planImage}
                 />
 
                 {/* Dialogs */}

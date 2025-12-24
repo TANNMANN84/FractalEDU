@@ -20,15 +20,41 @@ export const RapidMarkingPage: React.FC<RapidMarkingPageProps> = ({ test, onBack
   const [selectedClassId, setSelectedClassId] = useState<string>('all');
   const [selectedStudentId, setSelectedStudentId] = useState<string>('');
 
+  // Cohort filtering based on test's yearGroup
+  const availableStudents = React.useMemo(() => {
+    if (!test.yearGroup) return students;
+    const testYearNum = test.yearGroup.toString().replace(/\D/g, '');
+    if (!testYearNum) return students;
+
+    return students.filter(s => {
+      if (!s.cohort) return false;
+      const studentCohortNum = s.cohort.toString().replace(/\D/g, '');
+      return studentCohortNum === testYearNum;
+    });
+  }, [students, test.yearGroup]);
+
+  const availableClasses = React.useMemo(() => {
+    if (!test.yearGroup) return classes;
+    const testYearNum = test.yearGroup.toString().replace(/\D/g, '');
+    if (!testYearNum) return classes;
+
+    return classes.filter(c => {
+      const cYear = c.yearLevel || c.name.match(/^(\d+)/)?.[1];
+      if (!cYear) return false;
+      const cYearNum = cYear.toString().replace(/\D/g, '');
+      return cYearNum === testYearNum;
+    });
+  }, [classes, test.yearGroup]);
+
   // Derived filtered students (for next/prev logic)
   const filteredStudents = React.useMemo(() => {
-    let list = students;
+    let list = availableStudents;
     if (selectedClassId !== 'all') {
-      const cls = classes.find(c => c.id === selectedClassId);
+      const cls = availableClasses.find(c => c.id === selectedClassId);
       list = list.filter(s => cls?.studentIds.includes(s.id));
     }
     return list.sort((a, b) => a.name.localeCompare(b.name));
-  }, [students, classes, selectedClassId]);
+  }, [availableStudents, availableClasses, selectedClassId]);
 
   // Init selection
   useEffect(() => {
@@ -86,8 +112,8 @@ export const RapidMarkingPage: React.FC<RapidMarkingPageProps> = ({ test, onBack
         
         {/* Sidebar (Always visible unless mobile?) */}
         <MarkingSidebar 
-            students={students}
-            classes={classes}
+            students={availableStudents}
+            classes={availableClasses}
             results={rapidResults}
             testId={test.id}
             testType={testType}

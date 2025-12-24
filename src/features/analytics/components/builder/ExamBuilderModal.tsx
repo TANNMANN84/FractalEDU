@@ -90,7 +90,9 @@ export const ExamBuilderModal: React.FC<ExamBuilderModalProps> = ({ onClose, exa
             cohort: examCohort,
             totalMarks: totalMarks,
             questions: questions,
-            syllabusId: selectedSyllabus
+            syllabusId: selectedSyllabus,
+            title: undefined,
+            maxMarks: 0
         };
         if (examToEdit) updateExam(examToEdit.id, examData);
         else addExam(examData);

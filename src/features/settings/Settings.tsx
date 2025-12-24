@@ -14,6 +14,7 @@ import { ConfirmModal } from '@/shared/components/ConfirmModal';
 import { storageService } from '@/services/storageService';
 import { fileSystemSync } from '@/services/fileSystemSync';
 import { ReviewPackage, Student, ClassGroup, MonitoringDoc, BackupFile, WellbeingStatus, SupportLevel } from '@/types';
+import { useAutoSync } from '@/hooks/useAutoSync';
 
 type Tab = 'Profile' | 'Students' | 'Classes' | 'System';
 
@@ -36,8 +37,9 @@ export const Settings: React.FC = () => {
   } = useAppStore();
 
   const { theme, setTheme } = useTheme();
+  const { isConnected } = useAutoSync();
 
-  const [activeTab, setActiveTab] = useState<Tab>('Profile');
+  const [activeTab, setActiveTab] = useState<Tab>(() => teacherProfile?.name ? 'System' : 'Profile');
   const [isProcessing, setIsProcessing] = useState(false);
   
   // Modal States
@@ -91,6 +93,14 @@ export const Settings: React.FC = () => {
       }
   }, [teacherProfile]);
 
+  // Sync local handle state with global service state
+  useEffect(() => {
+      if (isConnected && !syncHandle) {
+          const globalHandle = (fileSystemSync as any).handle || (fileSystemSync as any).directoryHandle;
+          if (globalHandle) setSyncHandle(globalHandle);
+      }
+  }, [isConnected, syncHandle]);
+
   // --- Handlers ---
 
   const handleSaveProfile = () => {
@@ -125,6 +135,9 @@ export const Settings: React.FC = () => {
     if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
     
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
     let clientX, clientY;
     
     // Check for touch vs mouse event
@@ -141,8 +154,8 @@ export const Settings: React.FC = () => {
     }
 
     return { 
-        x: clientX - rect.left, 
-        y: clientY - rect.top 
+        x: (clientX - rect.left) * scaleX, 
+        y: (clientY - rect.top) * scaleY 
     };
   };
 
@@ -399,11 +412,11 @@ export const Settings: React.FC = () => {
   };
 
   const handleSyncUp = async () => {
-      if (!syncHandle) return;
+      if (!syncHandle && !isConnected) return;
       setIsProcessing(true);
       try {
           const appData = { teacherProfile, students, classes, exams, results, rapidTests, rapidResults, monitoringDocs };
-          await fileSystemSync.syncUp(syncHandle, appData);
+          await fileSystemSync.syncUp(syncHandle || undefined, appData);
           addToast('Synced UP to local folder successfully.', 'success');
       } catch (err: any) {
           console.error(err);
@@ -414,7 +427,7 @@ export const Settings: React.FC = () => {
   };
 
   const handleSyncDown = async () => {
-      if (!syncHandle) return;
+      if (!syncHandle && !isConnected) return;
       
       setConfirmAction({
           isOpen: true,
@@ -424,7 +437,7 @@ export const Settings: React.FC = () => {
           onConfirm: async () => {
               setIsProcessing(true);
               try {
-                  const { appData, files } = await fileSystemSync.syncDown(syncHandle);
+                  const { appData, files } = await fileSystemSync.syncDown(syncHandle || undefined);
                   
                   await storageService.clearFileContent();
                   if (files) {
@@ -769,12 +782,12 @@ export const Settings: React.FC = () => {
                           <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700 mb-4">
                               <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-2">
-                                      <LinkIcon className={`w-4 h-4 ${syncHandle ? 'text-green-600 dark:text-green-400' : 'text-slate-400'}`} />
-                                      <span className={`text-sm font-medium ${syncHandle ? 'text-green-700 dark:text-green-300' : 'text-slate-500 dark:text-slate-400'}`}>
-                                          {syncHandle ? `Connected: ${syncHandle.name}` : 'Not connected'}
+                                      <LinkIcon className={`w-4 h-4 ${isConnected ? 'text-green-600 dark:text-green-400' : 'text-slate-400'}`} />
+                                      <span className={`text-sm font-medium ${isConnected ? 'text-green-700 dark:text-green-300' : 'text-slate-500 dark:text-slate-400'}`}>
+                                          {isConnected ? `Connected${syncHandle?.name ? `: ${syncHandle.name}` : ''}` : 'Not connected'}
                                       </span>
                                   </div>
-                                  {!syncHandle && (
+                                  {!isConnected && (
                                       <button 
                                           onClick={handleConnectSync}
                                           className="text-xs bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 px-3 py-1.5 rounded hover:bg-slate-50 dark:hover:bg-slate-600 font-bold text-slate-700 dark:text-slate-200"
@@ -788,7 +801,7 @@ export const Settings: React.FC = () => {
                           <div className="flex gap-4">
                               <button 
                                   onClick={handleSyncUp}
-                                  disabled={!syncHandle || isProcessing}
+                                  disabled={(!syncHandle && !isConnected) || isProcessing}
                                   className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-colors"
                               >
                                   {isProcessing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
@@ -796,7 +809,7 @@ export const Settings: React.FC = () => {
                               </button>
                               <button 
                                   onClick={handleSyncDown}
-                                  disabled={!syncHandle || isProcessing}
+                                  disabled={(!syncHandle && !isConnected) || isProcessing}
                                   className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 font-bold disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-colors"
                               >
                                   {isProcessing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}

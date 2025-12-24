@@ -27,7 +27,11 @@ export const MonitoringFileUpload: React.FC<MonitoringFileUploadProps> = ({ file
                 const base64 = await fileToBase64(selectedFile);
                 const newFileId = `file-${crypto.randomUUID()}`;
                 await storageService.saveFileContent(newFileId, base64);
-                onUpload({ id: newFileId, name: selectedFile.name });
+                onUpload({
+                    id: newFileId, name: selectedFile.name,
+                    incident: undefined,
+                    type: undefined
+                });
             } catch (error) {
                 console.error("Error saving file to DB", error);
                 alert("Could not upload file. Please try again.");

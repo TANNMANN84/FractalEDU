@@ -93,7 +93,7 @@ export const StudentDossier: React.FC<Props> = ({ student, onClose }) => {
                                         ATSI
                                     </span>
                                 )}
-                                {currentStudent.nccd?.active && (
+                                {currentStudent.nccd?.isNCCD && (
                                     <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 text-xs font-bold rounded uppercase tracking-wide border border-blue-200 flex items-center gap-1">
                                         NCCD: {currentStudent.nccd.level}
                                     </span>
@@ -108,6 +108,11 @@ export const StudentDossier: React.FC<Props> = ({ student, onClose }) => {
                                         Learning Needs
                                     </span>
                                 )}
+                                {currentStudent.profile?.customFlags?.map(flag => (
+                                    <span key={flag.id} className={`px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wide border ${flag.color}`}>
+                                        {flag.label}
+                                    </span>
+                                ))}
                             </div>
                         </div>
                     </div>

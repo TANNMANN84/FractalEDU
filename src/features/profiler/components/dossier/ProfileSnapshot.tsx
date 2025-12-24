@@ -28,16 +28,6 @@ export const ProfileSnapshot: React.FC<ProfileSnapshotProps> = ({ student, onEdi
 
     return (
         <div className="space-y-6 max-w-5xl mx-auto pb-10 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
-            {onEdit && (
-                <div className="absolute -top-1 right-0 z-10">
-                    <button 
-                        onClick={onEdit}
-                        className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-500 hover:text-brand-600 hover:border-brand-200 shadow-sm transition-all text-xs font-bold"
-                    >
-                        Edit Context
-                    </button>
-                </div>
-            )}
 
             {/* ROW 1: Identity & Wellbeing */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-1">
@@ -67,10 +57,6 @@ export const ProfileSnapshot: React.FC<ProfileSnapshotProps> = ({ student, onEdi
                         <div>
                             <p className="text-xs font-bold text-slate-400 uppercase">Gender</p>
                             <p className="font-medium text-slate-700">{student.profile?.gender || 'Not specified'}</p>
-                        </div>
-                        <div>
-                            <p className="text-xs font-bold text-slate-400 uppercase">Support Level</p>
-                            <p className="font-medium text-slate-700">{student.support.level}</p>
                         </div>
                         <div className="col-span-2 mt-2 pt-2 border-t border-slate-100">
                             <div className="flex items-center justify-between mb-1">
@@ -143,12 +129,14 @@ export const ProfileSnapshot: React.FC<ProfileSnapshotProps> = ({ student, onEdi
                 {/* 4. Behaviour History */}
                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
                     <h3 className="font-bold text-slate-800 text-lg mb-4 flex items-center gap-2">
-                        <TrendingUp className="w-5 h-5 text-emerald-500" /> Behaviour Trends
+                        <TrendingUp className="w-5 h-5 text-emerald-500" /> Wellbeing & Behaviour Trends
                     </h3>
                     <div className="space-y-4">
                         {history.length > 0 ? history.map(([year, stats]: any) => {
                             const pos = stats.positives || 0;
                             const neg = stats.negatives || 0;
+                            const lst = stats.lst || 0;
+                            const data = stats.data || 0;
                             const total = pos + neg;
                             const posPct = total > 0 ? (pos / total) * 100 : 0;
                             
@@ -156,7 +144,7 @@ export const ProfileSnapshot: React.FC<ProfileSnapshotProps> = ({ student, onEdi
                                 <div key={year}>
                                     <div className="flex justify-between text-xs font-bold text-slate-500 mb-1">
                                         <span>Year {year}</span>
-                                        <span><span className="text-emerald-600">{pos} Pos</span> <span className="text-slate-300">|</span> <span className="text-red-600">{neg} Neg</span></span>
+                                        <span><span className="text-emerald-600">{pos} Pos</span> <span className="text-slate-300">|</span> <span className="text-red-600">{neg} Neg</span> <span className="text-slate-300">|</span> <span className="text-teal-600">{lst} LST</span> <span className="text-slate-300">|</span> <span className="text-blue-600">{data} Data</span></span>
                                     </div>
                                     <div className="h-3 w-full bg-red-100 rounded-full overflow-hidden flex shadow-inner">
                                         <div style={{ width: `${posPct}%` }} className="h-full bg-emerald-400" />

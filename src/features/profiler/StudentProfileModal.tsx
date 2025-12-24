@@ -164,10 +164,6 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({ studen
                     <dt className="text-slate-500 text-xs uppercase tracking-wide">Academic Target</dt>
                     <dd className="font-medium text-slate-800">{currentStudent.academicTarget || 'N/A'}</dd>
                   </div>
-                   <div>
-                    <dt className="text-slate-500 text-xs uppercase tracking-wide">Support Level</dt>
-                    <dd className="font-medium text-slate-800">{currentStudent.support.level}</dd>
-                  </div>
                 </dl>
               </div>
 

@@ -111,7 +111,7 @@ export const ClassDetailView: React.FC<ClassDetailViewProps> = ({ classGroup, on
                     onClick={() => setIsManageOpen(true)} 
                     className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-bold text-sm transition-colors"
                 >
-                    <UserPlus className="w-4 h-4" /> Manage Enrollment
+                    <UserPlus className="w-4 h-4" /> Manage class list
                 </button>
             </div>
             <StudentList onSelectStudent={setSelectedStudent} lockedClassId={liveClass.id} />

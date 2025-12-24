@@ -46,6 +46,8 @@ const verifyPermission = async (handle: FileSystemHandle, readWrite: boolean): P
 
 export const fileSystemSync = {
   
+  getHandle: () => activeHandle,
+
   // 1. Connect (Manual Click)
   async connectFolder(): Promise<FileSystemDirectoryHandle | { name: string }> {
     try {

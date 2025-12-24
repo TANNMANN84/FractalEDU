@@ -96,7 +96,8 @@ export const Settings: React.FC = () => {
   // Sync local handle state with global service state
   useEffect(() => {
       if (isConnected && !syncHandle) {
-          const globalHandle = (fileSystemSync as any).handle || (fileSystemSync as any).directoryHandle;
+          // @ts-ignore
+          const globalHandle = fileSystemSync.getHandle ? fileSystemSync.getHandle() : null;
           if (globalHandle) setSyncHandle(globalHandle);
       }
   }, [isConnected, syncHandle]);
@@ -781,20 +782,27 @@ export const Settings: React.FC = () => {
 
                           <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700 mb-4">
                               <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-2">
-                                      <LinkIcon className={`w-4 h-4 ${isConnected ? 'text-green-600 dark:text-green-400' : 'text-slate-400'}`} />
-                                      <span className={`text-sm font-medium ${isConnected ? 'text-green-700 dark:text-green-300' : 'text-slate-500 dark:text-slate-400'}`}>
-                                          {isConnected ? `Connected${syncHandle?.name ? `: ${syncHandle.name}` : ''}` : 'Not connected'}
-                                      </span>
+                                  <div className="flex items-center gap-3">
+                                      <div className={`p-2 rounded-full ${isConnected ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' : 'bg-slate-100 dark:bg-slate-700 text-slate-400'}`}>
+                                          <LinkIcon className="w-5 h-5" />
+                                      </div>
+                                      <div>
+                                          <div className={`font-bold ${isConnected ? 'text-green-700 dark:text-green-400' : 'text-slate-500 dark:text-slate-400'}`}>
+                                              {isConnected ? 'Sync Active' : 'Not Connected'}
+                                          </div>
+                                          {isConnected && syncHandle?.name && (
+                                              <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                                  Location: <span className="font-mono bg-white dark:bg-slate-900 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">{syncHandle.name}</span>
+                                              </div>
+                                          )}
+                                      </div>
                                   </div>
-                                  {!isConnected && (
-                                      <button 
-                                          onClick={handleConnectSync}
-                                          className="text-xs bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 px-3 py-1.5 rounded hover:bg-slate-50 dark:hover:bg-slate-600 font-bold text-slate-700 dark:text-slate-200"
-                                      >
-                                          Connect Folder
-                                      </button>
-                                  )}
+                                  <button 
+                                      onClick={handleConnectSync}
+                                      className="text-xs bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-600 font-bold text-slate-700 dark:text-slate-200 shadow-sm transition-colors"
+                                  >
+                                      {isConnected ? 'Change Folder' : 'Connect Folder'}
+                                  </button>
                               </div>
                           </div>
 

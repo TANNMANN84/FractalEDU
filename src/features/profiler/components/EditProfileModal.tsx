@@ -80,7 +80,7 @@ export const EditProfileModal: React.FC<Props> = ({ student, onClose }) => {
     
     const historyYears = useMemo(() => {
         const years = [];
-        for (let i = currentYearNum - 1; i >= 7; i--) {
+        for (let i = currentYearNum; i >= 7; i--) {
             const yearDiff = currentYearNum - i;
             years.push({ grade: i, year: calendarYear - yearDiff });
         }
@@ -188,14 +188,14 @@ export const EditProfileModal: React.FC<Props> = ({ student, onClose }) => {
         }));
     };
 
-    const updateHistory = (grade: number, field: 'positives' | 'negatives', value: string) => {
+    const updateHistory = (grade: number, field: string, value: string) => {
         const num = parseInt(value) || 0;
         setFormData(prev => ({
             ...prev,
             behaviourHistory: {
                 ...prev.behaviourHistory,
                 [grade]: {
-                    ...(prev.behaviourHistory[grade] || { positives: 0, negatives: 0 }),
+                    ...(prev.behaviourHistory[grade] || { positives: 0, negatives: 0, lst: 0, data: 0 }),
                     [field]: num
                 }
             }
@@ -210,7 +210,7 @@ export const EditProfileModal: React.FC<Props> = ({ student, onClose }) => {
                 <div className="p-4 border-b flex justify-between items-center bg-slate-50">
                     <div className="flex items-center gap-2">
                         <User className="w-5 h-5 text-brand-600" />
-                        <h3 className="font-bold text-lg text-slate-800">Edit Student Context</h3>
+                        <h3 className="font-bold text-lg text-slate-800">Edit Student Details</h3>
                     </div>
                     <button onClick={onClose} className="p-1 hover:bg-slate-200 rounded-full transition-colors text-slate-500"><X className="w-5 h-5" /></button>
                 </div>
@@ -223,25 +223,26 @@ export const EditProfileModal: React.FC<Props> = ({ student, onClose }) => {
                             <input 
                                 value={formData.name} 
                                 onChange={e => setFormData({...formData, name: e.target.value})} 
-                                className="w-full p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none" 
+                                className="w-full p-2 border border-slate-300 rounded-lg text-sm bg-white text-slate-900 focus:ring-2 focus:ring-brand-500 outline-none" 
                                 placeholder="Full Name" 
                             />
                             <div className="flex gap-2">
                                 <select 
                                     value={formData.cohort} 
                                     onChange={e => setFormData({...formData, cohort: e.target.value})} 
-                                    className="w-1/2 p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none"
+                                    className="w-1/2 p-2 border border-slate-300 rounded-lg text-sm bg-white text-slate-900 focus:ring-2 focus:ring-brand-500 outline-none"
                                 >
                                     {['Year 7','Year 8','Year 9','Year 10','Year 11','Year 12'].map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
                                 <select 
                                     value={formData.gender} 
                                     onChange={e => setFormData({...formData, gender: e.target.value})} 
-                                    className="w-1/2 p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none"
+                                    className="w-1/2 p-2 border border-slate-300 rounded-lg text-sm bg-white text-slate-900 focus:ring-2 focus:ring-brand-500 outline-none"
                                 >
                                     <option value="">Gender...</option>
                                     <option value="Male">Male</option>
                                     <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
                                     <option value="Non-binary">Non-binary</option>
                                     <option value="Prefer not to say">Prefer not to say</option>
                                 </select>
@@ -286,7 +287,7 @@ export const EditProfileModal: React.FC<Props> = ({ student, onClose }) => {
                                 <textarea
                                     value={formData.wellbeingNotes}
                                     onChange={e => setFormData({...formData, wellbeingNotes: e.target.value})}
-                                    className="w-full p-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-brand-500 outline-none h-20 resize-none"
+                                    className="w-full p-2 border border-slate-300 rounded-lg text-sm bg-white text-slate-900 focus:ring-2 focus:ring-brand-500 outline-none h-20 resize-none"
                                     placeholder="Internal notes regarding wellbeing status..."
                                 />
                             </div>
@@ -300,7 +301,7 @@ export const EditProfileModal: React.FC<Props> = ({ student, onClose }) => {
                         <textarea 
                             value={formData.medicalConditions} 
                             onChange={e => setFormData({...formData, medicalConditions: e.target.value})} 
-                            className="w-full p-3 border border-slate-300 rounded-lg text-sm bg-slate-50 focus:bg-white transition-colors outline-none focus:ring-2 focus:ring-brand-500" 
+                            className="w-full p-3 border border-slate-300 rounded-lg text-sm bg-slate-50 text-slate-900 focus:bg-white transition-colors outline-none focus:ring-2 focus:ring-brand-500" 
                             placeholder="e.g. Asthma, Anaphylaxis"
                             rows={2}
                         />
@@ -326,7 +327,7 @@ export const EditProfileModal: React.FC<Props> = ({ student, onClose }) => {
                                     {formData.plans[type]?.active && (
                                         <div className="px-3 pb-3 space-y-3">
                                             <textarea 
-                                                className="w-full p-2 text-sm border border-indigo-200 rounded bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                className="w-full p-2 text-sm border border-indigo-200 rounded bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
                                                 placeholder={`Plan details or links...`}
                                                 rows={2}
                                                 value={formData.plans[type]?.notes || ''}
@@ -354,7 +355,7 @@ export const EditProfileModal: React.FC<Props> = ({ student, onClose }) => {
                                 <input 
                                     value={newConcern} 
                                     onChange={e => setNewConcern(e.target.value)} 
-                                    className="flex-1 border rounded p-2 text-sm outline-none focus:border-brand-500" 
+                                    className="flex-1 border rounded p-2 text-sm bg-white text-slate-900 outline-none focus:border-brand-500" 
                                     placeholder="Add custom concern..." 
                                     onKeyDown={e => e.key === 'Enter' && addConcern()} 
                                 />
@@ -370,7 +371,7 @@ export const EditProfileModal: React.FC<Props> = ({ student, onClose }) => {
                                             <button onClick={() => removeConcern(idx)}><Trash2 className="w-3 h-3 text-amber-400 hover:text-amber-600" /></button>
                                         </div>
                                         <input 
-                                            className="w-full bg-white border border-amber-100 rounded p-1 text-xs outline-none focus:border-amber-300" 
+                                            className="w-full bg-white text-slate-900 border border-amber-100 rounded p-1 text-xs outline-none focus:border-amber-300" 
                                             placeholder="Notes..." 
                                             value={c.note} 
                                             onChange={e => updateConcernNote(idx, e.target.value)} 
@@ -382,7 +383,7 @@ export const EditProfileModal: React.FC<Props> = ({ student, onClose }) => {
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase mb-3">Behaviour History</label>
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-3">Wellbeing History</label>
                             <div className="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
                                 <table className="w-full text-sm">
                                     <thead className="bg-slate-100 text-slate-500 font-bold text-xs">
@@ -390,6 +391,8 @@ export const EditProfileModal: React.FC<Props> = ({ student, onClose }) => {
                                             <th className="p-2 text-left pl-3">Year</th>
                                             <th className="p-2 text-center text-green-600 w-16">Pos</th>
                                             <th className="p-2 text-center text-red-600 w-16">Neg</th>
+                                            <th className="p-2 text-center text-teal-600 w-16">LST</th>
+                                            <th className="p-2 text-center text-blue-600 w-16">Data</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-200">
@@ -400,7 +403,7 @@ export const EditProfileModal: React.FC<Props> = ({ student, onClose }) => {
                                                     <input 
                                                         type="number" 
                                                         className="w-full text-center bg-white border border-slate-200 rounded p-1 text-green-700 font-bold focus:ring-1 focus:ring-green-500 outline-none text-xs"
-                                                        value={formData.behaviourHistory[grade]?.positives ?? 0}
+                                                        value={formData.behaviourHistory[grade]?.positives || ''}
                                                         onChange={e => updateHistory(grade, 'positives', e.target.value)}
                                                     />
                                                 </td>
@@ -408,8 +411,24 @@ export const EditProfileModal: React.FC<Props> = ({ student, onClose }) => {
                                                     <input 
                                                         type="number" 
                                                         className="w-full text-center bg-white border border-slate-200 rounded p-1 text-red-700 font-bold focus:ring-1 focus:ring-red-500 outline-none text-xs"
-                                                        value={formData.behaviourHistory[grade]?.negatives ?? 0}
+                                                        value={formData.behaviourHistory[grade]?.negatives || ''}
                                                         onChange={e => updateHistory(grade, 'negatives', e.target.value)}
+                                                    />
+                                                </td>
+                                                <td className="p-1 pr-2">
+                                                    <input 
+                                                        type="number" 
+                                                        className="w-full text-center bg-white border border-slate-200 rounded p-1 text-teal-700 font-bold focus:ring-1 focus:ring-teal-500 outline-none text-xs"
+                                                        value={(formData.behaviourHistory[grade] as any)?.lst || ''}
+                                                        onChange={e => updateHistory(grade, 'lst', e.target.value)}
+                                                    />
+                                                </td>
+                                                <td className="p-1 pr-2">
+                                                    <input 
+                                                        type="number" 
+                                                        className="w-full text-center bg-white border border-slate-200 rounded p-1 text-blue-700 font-bold focus:ring-1 focus:ring-blue-500 outline-none text-xs"
+                                                        value={(formData.behaviourHistory[grade] as any)?.data || ''}
+                                                        onChange={e => updateHistory(grade, 'data', e.target.value)}
                                                     />
                                                 </td>
                                             </tr>

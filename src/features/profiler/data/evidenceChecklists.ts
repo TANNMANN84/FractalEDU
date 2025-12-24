@@ -118,9 +118,66 @@ export const EVIDENCE_DOMAINS = {
             'Calculator use', 
             'Reference sheet / Glossary'
         ]
+    },
+    behaviour: {
+        'Positive Supports': ['Verbal praise', 'Token/Reward system', 'Positive phone call', 'Class privilege', 'Leadership role'],
+        'Interventions': ['Non-verbal cue', 'Verbal redirection', 'Seating adjustment', 'Restorative conversation', 'Cool down break'],
+        'Structure': ['Visual timetable', 'Predictable routine', 'Clear expectations', 'Transition warnings']
+    },
+    wellbeing: {
+        'Check-ins': ['Morning greeting', 'Emotional check-in', 'Debrief after incident', 'End of day checkout'],
+        'Supports': ['Sensory tools', 'Quiet space access', 'Peer buddy', 'Referral to counsellor'],
+        'Communication': ['Parent/Carer contact', 'Wellbeing team update', 'External agency liaison']
+    },
+    nccd: {
+        'Curriculum': ['Modified task', 'Differentiated content', 'Alternative format', 'Scaffolded instruction'],
+        'Assessment': ['Extra time', 'Scribe/Reader', 'Separate supervision', 'Adjusted criteria'],
+        'Environment': ['Physical access', 'Sensory adjustment', 'Specialized equipment', 'Seating plan'],
+        'Social/Emotional': ['Social skills program', 'Structured break time', 'Crisis management plan', 'Check-in support'],
+        'Consultation': ['Parent meeting', 'Specialist review', 'Case conference', 'Email communication']
     }
 };
 
 export const EXTEND_CHECKLIST = Object.values(EVIDENCE_DOMAINS.hpge).reduce((acc, val) => acc.concat(val), [] as string[]);
 export const ASSIST_CHECKLIST = Object.values(EVIDENCE_DOMAINS.assist).reduce((acc, val) => acc.concat(val), [] as string[]);
 export const CULTURAL_CHECKLIST = Object.values(EVIDENCE_DOMAINS.cultural).reduce((acc, val) => acc.concat(val), [] as string[]);
+export const LITERACY_CHECKLIST = Object.values(EVIDENCE_DOMAINS.literacy).reduce((acc, val) => acc.concat(val), [] as string[]);
+export const NUMERACY_CHECKLIST = Object.values(EVIDENCE_DOMAINS.numeracy).reduce((acc, val) => acc.concat(val), [] as string[]);
+export const BEHAVIOUR_CHECKLIST = Object.values(EVIDENCE_DOMAINS.behaviour).reduce((acc, val) => acc.concat(val), [] as string[]);
+export const WELLBEING_CHECKLIST = Object.values(EVIDENCE_DOMAINS.wellbeing).reduce((acc, val) => acc.concat(val), [] as string[]);
+export const NCCD_CHECKLIST = Object.values(EVIDENCE_DOMAINS.nccd).reduce((acc, val) => acc.concat(val), [] as string[]);
+
+export const NCCD_LEVELS = {
+    'QDTP': [
+        'Quality differentiated teaching',
+        'Explicit instruction',
+        'Visual supports',
+        'Flexible grouping',
+        'Scaffolded tasks',
+        'Alternative representation'
+    ],
+    'Supplementary': [
+        'Adjusted assessment conditions',
+        'Regular check-ins',
+        'Modified homework/tasks',
+        'Social skills support',
+        'Sensory breaks',
+        'Scribe / Reader support',
+        'Separate supervision'
+    ],
+    'Substantial': [
+        'Significant curriculum modification',
+        'Frequent individual support (SLSO)',
+        'Specialized equipment/technology',
+        'Regular health support procedures',
+        'Detailed risk management plan',
+        'Social playground support'
+    ],
+    'Extensive': [
+        'Constant 1:1 support',
+        'Alternative communication systems',
+        'Full personal care support',
+        'Highly specialized curriculum',
+        'Therapy delivered in school'
+    ]
+};

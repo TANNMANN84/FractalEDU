@@ -262,55 +262,69 @@ export const NeedsAdjustments: React.FC<Props> = ({ student, onAddEvidence }) =>
 
             {/* 3. Strategy Bank */}
             <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
-                    <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
-                        <Check className="w-5 h-5" />
+                <div className="flex justify-between items-center mb-6">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                            <Check className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-slate-800 text-lg">Active Adjustments</h3>
+                            <p className="text-xs text-slate-500">Select strategies currently implemented for this student.</p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 className="font-bold text-slate-800 text-lg">Active Adjustments</h3>
-                        <p className="text-xs text-slate-500">Select strategies currently implemented for this student.</p>
-                    </div>
+                    
+                    <label className={`flex items-center gap-2 cursor-pointer px-4 py-2 rounded-lg border transition-colors ${student.hasLearningPlan ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
+                        <input 
+                            type="checkbox" 
+                            checked={student.hasLearningPlan || false} 
+                            onChange={e => updateStudent(student.id, { hasLearningPlan: e.target.checked })} 
+                            className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300" 
+                        />
+                        <span className="text-sm font-bold">Requires Adjustments</span>
+                    </label>
                 </div>
 
-                <div className="space-y-8">
-                    {Object.entries(STRATEGY_BANK).map(([category, strategies]) => (
-                        <div key={category}>
-                            <h4 className="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
-                                {category}
-                            </h4>
-                            <div className="flex flex-wrap gap-2">
-                                {strategies.map(strat => {
-                                    const isActive = activeAdjIds.has(strat);
-                                    return (
-                                        <div key={strat} className={`group flex items-center p-1 rounded-lg border transition-all ${isActive ? 'bg-emerald-50 border-emerald-200 shadow-sm' : 'bg-white border-slate-200 hover:border-slate-300'}`}>
-                                            <button
-                                                onClick={() => toggleStrategy(strat, category)}
-                                                className="px-3 py-1.5 text-sm font-medium flex items-center gap-2 text-left"
-                                            >
-                                                <div className={`w-4 h-4 rounded-full flex items-center justify-center border transition-colors ${isActive ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
-                                                    {isActive && <Check className="w-2.5 h-2.5" />}
-                                                </div>
-                                                <span className={isActive ? 'text-emerald-900' : 'text-slate-600'}>{strat}</span>
-                                            </button>
-                                            
-                                            {isActive && (
-                                                <div className="pr-1 flex items-center border-l border-emerald-200 pl-1 ml-1">
-                                                    <button 
-                                                        onClick={() => onAddEvidence(strat)}
-                                                        className="text-[10px] bg-white text-emerald-600 px-2 py-1 rounded font-bold hover:bg-emerald-100 transition-colors border border-emerald-100 flex items-center gap-1"
-                                                    >
-                                                        <Plus className="w-3 h-3" /> Proof
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
+                {student.hasLearningPlan && (
+                    <div className="space-y-8 animate-in slide-in-from-top-4 duration-300">
+                        {Object.entries(STRATEGY_BANK).map(([category, strategies]) => (
+                            <div key={category}>
+                                <h4 className="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+                                    {category}
+                                </h4>
+                                <div className="flex flex-wrap gap-2">
+                                    {strategies.map(strat => {
+                                        const isActive = activeAdjIds.has(strat);
+                                        return (
+                                            <div key={strat} className={`group flex items-center p-1 rounded-lg border transition-all ${isActive ? 'bg-emerald-50 border-emerald-200 shadow-sm' : 'bg-white border-slate-200 hover:border-slate-300'}`}>
+                                                <button
+                                                    onClick={() => toggleStrategy(strat, category)}
+                                                    className="px-3 py-1.5 text-sm font-medium flex items-center gap-2 text-left"
+                                                >
+                                                    <div className={`w-4 h-4 rounded-full flex items-center justify-center border transition-colors ${isActive ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
+                                                        {isActive && <Check className="w-2.5 h-2.5" />}
+                                                    </div>
+                                                    <span className={isActive ? 'text-emerald-900' : 'text-slate-600'}>{strat}</span>
+                                                </button>
+                                                
+                                                {isActive && (
+                                                    <div className="pr-1 flex items-center border-l border-emerald-200 pl-1 ml-1">
+                                                        <button 
+                                                            onClick={() => onAddEvidence(strat)}
+                                                            className="text-[10px] bg-white text-emerald-600 px-2 py-1 rounded font-bold hover:bg-emerald-100 transition-colors border border-emerald-100 flex items-center gap-1"
+                                                        >
+                                                            <Plus className="w-3 h-3" /> Proof
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );

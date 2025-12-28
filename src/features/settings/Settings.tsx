@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppStore } from '@/store';
 import { useTheme } from '../../context/ThemeContext';
-import { UserPlus, Layout, Trash2, Database, Save, Upload, User, Users, Server, RotateCw, Mail, School, BookOpen, Briefcase, Cloud, RefreshCw, Link as LinkIcon, Download, Sun, Moon, Monitor, FileText, PenTool, Edit3, Image as ImageIcon, Eraser } from 'lucide-react';
+import { UserPlus, Layout, Trash2, Database, Save, Upload, User, Users, Server, RotateCw, Mail, School, BookOpen, Briefcase, Cloud, RefreshCw, Link as LinkIcon, Download, Sun, Moon, Monitor, FileText, PenTool, Edit3, Image as ImageIcon, Eraser, Clock, CalendarRange, Plus, Minus, Edit2, X, ArrowDown, ArrowUp } from 'lucide-react';
 import { AddStudentModal } from '../admin/AddStudentModal';
 import { CreateClassModal } from '../admin/CreateClassModal';
 import { ManageStudentsModal } from '../admin/ManageStudentsModal';
@@ -13,10 +13,10 @@ import { ReviewModal } from './components/ReviewModal';
 import { ConfirmModal } from '@/shared/components/ConfirmModal';
 import { storageService } from '@/services/storageService';
 import { fileSystemSync } from '@/services/fileSystemSync';
-import { ReviewPackage, Student, ClassGroup, MonitoringDoc, BackupFile, WellbeingStatus, SupportLevel } from '@/types';
+import { ReviewPackage, Student, ClassGroup, MonitoringDoc, BackupFile, WellbeingStatus, SupportLevel, SchoolStructure, DaySchedule, TimeSlot, PeriodType } from '@/types';
 import { useAutoSync } from '@/hooks/useAutoSync';
 
-type Tab = 'Profile' | 'Students' | 'Classes' | 'System';
+type Tab = 'Profile' | 'Structure' | 'Students' | 'Classes' | 'System';
 
 export const Settings: React.FC = () => {
   const { 
@@ -33,13 +33,14 @@ export const Settings: React.FC = () => {
       setTeacherProfile,
       addStudent,
       updateMonitoringDoc,
-      addToast
+      addToast,
+      schoolStructure: savedStructure, setSchoolStructure: saveStructure
   } = useAppStore();
 
   const { theme, setTheme } = useTheme();
   const { isConnected } = useAutoSync();
 
-  const [activeTab, setActiveTab] = useState<Tab>(() => teacherProfile?.name ? 'System' : 'Profile');
+  const [activeTab, setActiveTab] = useState<Tab>(() => teacherProfile?.name ? 'Structure' : 'Profile');
   const [isProcessing, setIsProcessing] = useState(false);
   
   // Modal States
@@ -76,6 +77,30 @@ export const Settings: React.FC = () => {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const signatureInputRef = useRef<HTMLInputElement>(null);
+
+  // --- School Structure State ---
+  // Initialize from store if available, otherwise default
+  const [schoolStructure, setSchoolStructure] = useState<SchoolStructure>(savedStructure || {
+      cycle: 'Fortnightly',
+      days: []
+  });
+
+  // Keep local state in sync if store updates (e.g. after a cloud pull)
+  useEffect(() => {
+      if (savedStructure) setSchoolStructure(savedStructure);
+  }, [savedStructure]);
+
+  // Wizard State
+  const [wizPeriods, setWizPeriods] = useState(5);
+  const [wizDuration, setWizDuration] = useState(60);
+  const [wizStartTime, setWizStartTime] = useState("08:55");
+  const [wizRollCallDuration, setWizRollCallDuration] = useState(10);
+  const [editingDay, setEditingDay] = useState<DaySchedule | null>(null);
+  const [wizBreaks, setWizBreaks] = useState<{name: string, duration: number, afterPeriod: number}[]>([
+      { name: 'Recess', duration: 25, afterPeriod: 2 },
+      { name: 'Lunch 1', duration: 25, afterPeriod: 4 },
+      { name: 'Lunch 2', duration: 25, afterPeriod: 4 }
+  ]);
 
   // Sync state if store updates externally
   useEffect(() => {
@@ -235,7 +260,8 @@ export const Settings: React.FC = () => {
             results, 
             rapidTests, 
             rapidResults, 
-            monitoringDocs 
+            monitoringDocs,
+            schoolStructure: savedStructure // Include in Backup
         };
         
         const backup: BackupFile = { dataType: 'fullBackup', appData, files };
@@ -416,7 +442,7 @@ export const Settings: React.FC = () => {
       if (!syncHandle && !isConnected) return;
       setIsProcessing(true);
       try {
-          const appData = { teacherProfile, students, classes, exams, results, rapidTests, rapidResults, monitoringDocs };
+          const appData = { teacherProfile, students, classes, exams, results, rapidTests, rapidResults, monitoringDocs, schoolStructure: savedStructure };
           await fileSystemSync.syncUp(syncHandle || undefined, appData);
           addToast('Synced UP to local folder successfully.', 'success');
       } catch (err: any) {
@@ -459,6 +485,154 @@ export const Settings: React.FC = () => {
       });
   };
 
+  // --- Helper: Sort Breaks ---
+  const handleUpdateBreak = (index: number, field: string, value: any) => {
+      const newBreaks = [...wizBreaks];
+      newBreaks[index] = { ...newBreaks[index], [field]: value };
+      setWizBreaks(newBreaks.sort((a, b) => a.afterPeriod - b.afterPeriod));
+  };
+
+  // --- Structure Generator Logic ---
+  const addMinutes = (time: string, mins: number): string => {
+      const [h, m] = time.split(':').map(Number);
+      const totalMins = h * 60 + m + mins;
+      const newH = Math.floor(totalMins / 60) % 24;
+      const newM = totalMins % 60;
+      return `${String(newH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`;
+  };
+
+  const generateStructure = () => {
+      const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+      const weeks = schoolStructure.cycle === 'Fortnightly' ? ['A', 'B'] : ['A'];
+      
+      // Ensure breaks are sorted for correct insertion
+      const sortedBreaks = [...wizBreaks].sort((a, b) => a.afterPeriod - b.afterPeriod);
+      
+      const newDays: DaySchedule[] = [];
+
+      weeks.forEach(week => {
+          days.forEach(day => {
+              const slots: TimeSlot[] = [];
+              let currentTime = wizStartTime;
+
+              // Add Before School Buffer
+              const beforeSchoolStart = addMinutes(currentTime, -30);
+              slots.push({
+                  id: crypto.randomUUID(),
+                  name: 'Before School',
+                  type: 'Admin',
+                  startTime: beforeSchoolStart,
+                  endTime: currentTime,
+                  duration: 30
+              });
+
+              // Add Roll Call
+              if (wizRollCallDuration > 0) {
+                  slots.push({
+                      id: crypto.randomUUID(),
+                      name: 'Roll Call',
+                      type: 'RollCall',
+                      startTime: currentTime,
+                      endTime: addMinutes(currentTime, wizRollCallDuration),
+                      duration: wizRollCallDuration
+                  });
+                  currentTime = addMinutes(currentTime, wizRollCallDuration);
+              }
+
+              for (let i = 1; i <= wizPeriods; i++) {
+                  // Add Period
+                  const endTime = addMinutes(currentTime, wizDuration);
+                  slots.push({
+                      id: crypto.randomUUID(),
+                      name: `Period ${i}`,
+                      type: 'Teaching',
+                      startTime: currentTime,
+                      endTime: endTime,
+                      duration: wizDuration
+                  });
+                  currentTime = endTime;
+
+                  // Check for Break
+                  // Use filter to allow multiple breaks after same period (e.g. split lunch)
+                  const breaksHere = sortedBreaks.filter(b => b.afterPeriod === i);
+                  breaksHere.forEach(breakRule => {
+                      const breakEnd = addMinutes(currentTime, breakRule.duration);
+                      slots.push({
+                          id: crypto.randomUUID(),
+                          name: breakRule.name,
+                          type: 'Break',
+                          startTime: currentTime,
+                          endTime: breakEnd,
+                          duration: breakRule.duration
+                      });
+                      currentTime = breakEnd;
+                  });
+              }
+
+              // Add After School Buffer
+              const afterSchoolEnd = addMinutes(currentTime, 30);
+              slots.push({
+                  id: crypto.randomUUID(),
+                  name: 'After School',
+                  type: 'Admin',
+                  startTime: currentTime,
+                  endTime: afterSchoolEnd,
+                  duration: 30
+              });
+
+              newDays.push({
+                  id: crypto.randomUUID(),
+                  day,
+                  week: schoolStructure.cycle === 'Fortnightly' ? (week as 'A' | 'B') : null,
+                  slots
+              });
+          });
+      });
+
+      setSchoolStructure(prev => ({ ...prev, days: newDays }));
+      addToast('Timetable structure generated successfully.', 'success');
+  };
+
+  const handleSaveStructure = () => {
+      if (saveStructure) {
+          saveStructure(schoolStructure);
+      } else {
+          console.warn("Store action 'setSchoolStructure' not found. Please update store.ts");
+      }
+      addToast('School structure saved to system.', 'success');
+  };
+
+  // --- Day Editor Logic ---
+  const handleDayEditSave = () => {
+      if (!editingDay) return;
+      setSchoolStructure(prev => ({
+          ...prev,
+          days: prev.days.map(d => d.id === editingDay.id ? editingDay : d)
+      }));
+      setEditingDay(null);
+      addToast('Day schedule updated.', 'success');
+  };
+
+  const updateDaySlot = (index: number, field: keyof TimeSlot, value: any) => {
+      if (!editingDay) return;
+      const newSlots = [...editingDay.slots];
+      
+      // Update the specific field
+      newSlots[index] = { ...newSlots[index], [field]: value };
+      
+      // Recalculate all subsequent times based on durations
+      // We assume the day starts at the same time as the first slot originally did
+      let currentTime = newSlots[0].startTime;
+      
+      for (let i = 0; i < newSlots.length; i++) {
+          newSlots[i].startTime = currentTime;
+          newSlots[i].endTime = addMinutes(currentTime, newSlots[i].duration);
+          currentTime = newSlots[i].endTime;
+      }
+      
+      setEditingDay({ ...editingDay, slots: newSlots });
+  };
+
   const TabButton = ({ id, icon: Icon, label }: any) => (
       <button 
           onClick={() => setActiveTab(id)}
@@ -480,6 +654,7 @@ export const Settings: React.FC = () => {
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden min-h-[600px] flex flex-col">
           <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
               <TabButton id="Profile" icon={User} label="My Profile" />
+              <TabButton id="Structure" icon={CalendarRange} label="School Structure" />
               <TabButton id="Students" icon={Users} label="Students" />
               <TabButton id="Classes" icon={Layout} label="Classes" />
               <TabButton id="System" icon={Server} label="System" />
@@ -680,6 +855,209 @@ export const Settings: React.FC = () => {
                           <button onClick={handleSaveProfile} className="px-6 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 font-bold shadow-sm flex items-center gap-2">
                               <Save className="w-4 h-4" /> Save Profile
                           </button>
+                      </div>
+                  </div>
+              )}
+
+              {/* SCHOOL STRUCTURE TAB */}
+              {activeTab === 'Structure' && (
+                  <div className="space-y-8 animate-in fade-in max-w-5xl">
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                          
+                          {/* Configuration Wizard */}
+                          <div className="lg:col-span-1 space-y-6">
+                              <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                                  <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
+                                      <Clock className="w-5 h-5 text-brand-600" /> Setup Wizard
+                                  </h3>
+                                  
+                                  <div className="space-y-4">
+                                      <div>
+                                          <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Timetable Cycle</label>
+                                          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+                                              <button 
+                                                  onClick={() => setSchoolStructure(s => ({ ...s, cycle: 'Weekly' }))}
+                                                  className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${schoolStructure.cycle === 'Weekly' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-600 dark:text-brand-400' : 'text-slate-500'}`}
+                                              >
+                                                  Weekly
+                                              </button>
+                                              <button 
+                                                  onClick={() => setSchoolStructure(s => ({ ...s, cycle: 'Fortnightly' }))}
+                                                  className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${schoolStructure.cycle === 'Fortnightly' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-600 dark:text-brand-400' : 'text-slate-500'}`}
+                                              >
+                                                  Fortnightly
+                                              </button>
+                                          </div>
+                                      </div>
+
+                                      <div className="grid grid-cols-2 gap-4">
+                                          <div>
+                                              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Term Start Date (Week A)</label>
+                                              <input 
+                                                  type="date" 
+                                                  value={schoolStructure.termStartDate || ''}
+                                                  onChange={e => setSchoolStructure(s => ({ ...s, termStartDate: e.target.value }))}
+                                                  className="w-full p-2 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm"
+                                              />
+                                              <p className="text-[10px] text-slate-400 mt-1">Select the Monday of the first Week A.</p>
+                                          </div>
+                                          <div>
+                                              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Term Duration (Weeks)</label>
+                                              <input 
+                                                  type="number" 
+                                                  value={schoolStructure.termDurationWeeks || 10}
+                                                  onChange={e => setSchoolStructure(s => ({ ...s, termDurationWeeks: Number(e.target.value) }))}
+                                                  className="w-full p-2 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm"
+                                              />
+                                          </div>
+                                      </div>
+
+                                      <div className="grid grid-cols-2 gap-4">
+                                          <div>
+                                              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Start Time</label>
+                                              <input 
+                                                  type="time" 
+                                                  value={wizStartTime}
+                                                  onChange={e => setWizStartTime(e.target.value)}
+                                                  className="w-full p-2 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm"
+                                              />
+                                          </div>
+                                          <div>
+                                              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Roll Call (mins)</label>
+                                              <input 
+                                                  type="number" 
+                                                  value={wizRollCallDuration}
+                                                  onChange={e => setWizRollCallDuration(Number(e.target.value))}
+                                                  className="w-full p-2 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm"
+                                              />
+                                          </div>
+                                          <div>
+                                              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Periods / Day</label>
+                                              <input 
+                                                  type="number" 
+                                                  value={wizPeriods}
+                                                  onChange={e => setWizPeriods(Number(e.target.value))}
+                                                  className="w-full p-2 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm"
+                                              />
+                                          </div>
+                                      </div>
+
+                                      <div>
+                                          <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Period Duration (mins)</label>
+                                          <input 
+                                              type="number" 
+                                              value={wizDuration}
+                                              onChange={e => setWizDuration(Number(e.target.value))}
+                                              className="w-full p-2 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm"
+                                          />
+                                      </div>
+
+                                      <div>
+                                          <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Breaks</label>
+                                          <div className="space-y-2">
+                                              {wizBreaks.map((b, idx) => (
+                                                  <div key={idx} className="grid grid-cols-12 gap-2 items-center text-sm bg-slate-50 dark:bg-slate-800 p-2 rounded border border-slate-200 dark:border-slate-700 group">
+                                                      <div className="col-span-4">
+                                                          <input 
+                                                              value={b.name}
+                                                              onChange={e => handleUpdateBreak(idx, 'name', e.target.value)}
+                                                              className="bg-transparent border-b border-transparent hover:border-slate-300 focus:border-brand-500 outline-none w-full font-medium text-slate-700 dark:text-slate-200"
+                                                              placeholder="Name"
+                                                          />
+                                                      </div>
+                                                      <div className="col-span-3 flex items-center gap-1 bg-white dark:bg-slate-900 px-2 py-1 rounded border border-slate-200 dark:border-slate-700">
+                                                          <input 
+                                                              type="number"
+                                                              value={b.duration}
+                                                              onChange={e => handleUpdateBreak(idx, 'duration', Number(e.target.value))}
+                                                              className="w-full text-center bg-transparent outline-none text-slate-500"
+                                                          />
+                                                          <span className="text-xs text-slate-400">m</span>
+                                                      </div>
+                                                      <div className="col-span-4">
+                                                          <select 
+                                                              value={b.afterPeriod} 
+                                                              onChange={e => handleUpdateBreak(idx, 'afterPeriod', Number(e.target.value))}
+                                                              className="w-full p-1 rounded border border-slate-200 dark:border-slate-700 text-xs bg-white dark:bg-slate-900 outline-none"
+                                                          >
+                                                              {Array.from({ length: wizPeriods }, (_, i) => i + 1).map(p => (
+                                                                  <option key={p} value={p}>After Period {p}</option>
+                                                              ))}
+                                                          </select>
+                                                      </div>
+                                                      
+                                                      <div className="col-span-1 flex justify-end">
+                                                          <button 
+                                                              onClick={() => setWizBreaks(wizBreaks.filter((_, i) => i !== idx))}
+                                                              className="text-red-500 hover:bg-red-50 rounded p-1"
+                                                          >
+                                                              <Minus className="w-3 h-3" />
+                                                          </button>
+                                                      </div>
+                                                  </div>
+                                              ))}
+                                              <div className="flex gap-2">
+                                                  <button 
+                                                      onClick={() => {
+                                                          setWizBreaks([...wizBreaks, { name: 'New Break', duration: 25, afterPeriod: 1 }]);
+                                                      }}
+                                                      className="w-full py-2 border border-dashed border-slate-300 dark:border-slate-600 rounded text-xs font-bold text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-center gap-1"
+                                                  >
+                                                      <Plus className="w-3 h-3" /> Add Break
+                                                  </button>
+                                              </div>
+                                          </div>
+                                      </div>
+
+                                      <button 
+                                          onClick={generateStructure}
+                                          className="w-full py-3 bg-brand-600 text-white rounded-lg font-bold hover:bg-brand-700 shadow-sm transition-colors flex items-center justify-center gap-2"
+                                      >
+                                          <RefreshCw className="w-4 h-4" /> Generate Timetable
+                                      </button>
+                                  </div>
+                              </div>
+                          </div>
+
+                          {/* Visualization */}
+                          <div className="lg:col-span-2 space-y-6">
+                              <div className="flex justify-between items-center">
+                                  <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">Structure Preview</h3>
+                                  <button onClick={handleSaveStructure} className="px-4 py-2 bg-slate-900 dark:bg-slate-700 text-white rounded-lg font-bold text-sm hover:bg-slate-800 flex items-center gap-2">
+                                      <Save className="w-4 h-4" /> Save Configuration
+                                  </button>
+                              </div>
+
+                              {schoolStructure.days.length === 0 ? (
+                                  <div className="h-64 flex flex-col items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl text-slate-400">
+                                      <CalendarRange className="w-12 h-12 mb-2 opacity-50" />
+                                      <p>No structure generated yet.</p>
+                                      <p className="text-sm">Use the wizard to create your bell times.</p>
+                                  </div>
+                              ) : (
+                                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                                      {schoolStructure.days.map(day => (
+                                          <div key={day.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-3 shadow-sm">
+                                              <div className="font-bold text-sm text-slate-800 dark:text-slate-200 mb-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+                                                  {day.week ? <span className="text-brand-600 dark:text-brand-400 mr-1">{day.week}</span> : ''}
+                                                  <div className="flex justify-between items-center">
+                                                      <span>{day.day.substring(0, 3)}</span>
+                                                      <button onClick={() => setEditingDay(day)} className="text-slate-400 hover:text-brand-600"><Edit2 className="w-3 h-3" /></button>
+                                                  </div>
+                                              </div>
+                                              <div className="space-y-1">
+                                                  {day.slots.map((slot, i) => (
+                                                      <div key={i} className={`text-xs p-1.5 rounded flex justify-between ${slot.type === 'Break' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400' : slot.type === 'RollCall' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700' : slot.type === 'Sport' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700' : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}>
+                                                          <span className="font-medium truncate">{slot.name}</span>
+                                                          <span className="opacity-75">{slot.startTime}</span>
+                                                      </div>
+                                                  ))}
+                                              </div>
+                                          </div>
+                                      ))}
+                                  </div>
+                              )}
+                          </div>
                       </div>
                   </div>
               )}
@@ -949,6 +1327,70 @@ export const Settings: React.FC = () => {
               onConfirm={confirmAction.onConfirm}
               onClose={() => setConfirmAction(null)}
           />
+      )}
+
+      {/* Day Editor Modal */}
+      {editingDay && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+              <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col animate-in fade-in zoom-in duration-200">
+                  <div className="flex justify-between items-center p-4 border-b border-slate-200 dark:border-slate-800">
+                      <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">
+                          Edit Schedule: {editingDay.week ? `Week ${editingDay.week} ` : ''}{editingDay.day}
+                      </h3>
+                      <button onClick={() => setEditingDay(null)}><X className="w-5 h-5 text-slate-500" /></button>
+                  </div>
+                  
+                  <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                      <div className="grid grid-cols-12 gap-2 text-xs font-bold text-slate-500 uppercase px-2 mb-2">
+                          <div className="col-span-2">Start</div>
+                          <div className="col-span-2">End</div>
+                          <div className="col-span-2">Duration</div>
+                          <div className="col-span-3">Name</div>
+                          <div className="col-span-3">Type</div>
+                      </div>
+                      
+                      {editingDay.slots.map((slot, idx) => (
+                          <div key={idx} className="grid grid-cols-12 gap-2 items-center bg-slate-50 dark:bg-slate-800 p-2 rounded border border-slate-200 dark:border-slate-700">
+                              <div className="col-span-2 text-sm font-mono text-slate-600 dark:text-slate-400">{slot.startTime}</div>
+                              <div className="col-span-2 text-sm font-mono text-slate-600 dark:text-slate-400">{slot.endTime}</div>
+                              <div className="col-span-2">
+                                  <input 
+                                      type="number" 
+                                      value={slot.duration} 
+                                      onChange={e => updateDaySlot(idx, 'duration', Number(e.target.value))}
+                                      className="w-full p-1 text-sm rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900"
+                                  />
+                              </div>
+                              <div className="col-span-3">
+                                  <input 
+                                      value={slot.name} 
+                                      onChange={e => updateDaySlot(idx, 'name', e.target.value)}
+                                      className="w-full p-1 text-sm rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900"
+                                  />
+                              </div>
+                              <div className="col-span-3">
+                                  <select 
+                                      value={slot.type} 
+                                      onChange={e => updateDaySlot(idx, 'type', e.target.value as PeriodType)}
+                                      className="w-full p-1 text-sm rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900"
+                                  >
+                                      <option value="Teaching">Teaching</option>
+                                      <option value="Break">Break</option>
+                                      <option value="RollCall">Roll Call</option>
+                                      <option value="Sport">Sport</option>
+                                      <option value="Admin">Admin</option>
+                                  </select>
+                              </div>
+                          </div>
+                      ))}
+                  </div>
+
+                  <div className="p-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2">
+                      <button onClick={() => setEditingDay(null)} className="px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-sm font-medium">Cancel</button>
+                      <button onClick={handleDayEditSave} className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 font-bold text-sm shadow-sm">Save Changes</button>
+                  </div>
+              </div>
+          </div>
       )}
     </div>
   );

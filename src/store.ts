@@ -12,7 +12,9 @@ import {
   MonitoringDoc,
   Teacher,
   ClassProgram,
-  Annotation
+  Annotation,
+  SchoolStructure,
+  DaybookEntry
 } from './types';
 
 export interface ToastMessage { 
@@ -30,12 +32,16 @@ interface AppState {
   rapidTests: RapidTest[];
   rapidResults: RapidResult[];
   monitoringDocs: MonitoringDoc[];
+  schoolStructure?: SchoolStructure;
+  daybookEntries: DaybookEntry[];
   
   // UI State
   toasts: ToastMessage[];
 
   // Actions
   setTeacherProfile: (profile: Teacher) => void;
+  setSchoolStructure: (structure: SchoolStructure) => void;
+  setDaybookEntry: (entry: DaybookEntry) => void;
 
   addStudent: (student: Student) => void;
   updateStudent: (id: string, updates: Partial<Student>) => void;
@@ -95,9 +101,21 @@ export const useAppStore = create<AppState>()(
       rapidTests: [],
       rapidResults: [],
       monitoringDocs: [],
+      schoolStructure: undefined,
+      daybookEntries: [],
       toasts: [],
 
       setTeacherProfile: (profile) => set({ teacherProfile: profile }),
+      setSchoolStructure: (structure) => set({ schoolStructure: structure }),
+      setDaybookEntry: (entry) => set((state) => {
+          const idx = state.daybookEntries.findIndex(e => e.date === entry.date && e.slotId === entry.slotId);
+          if (idx >= 0) {
+              const newEntries = [...state.daybookEntries];
+              newEntries[idx] = { ...newEntries[idx], content: entry.content };
+              return { daybookEntries: newEntries };
+          }
+          return { daybookEntries: [...state.daybookEntries, { ...entry, id: crypto.randomUUID() }] };
+      }),
 
       addStudent: (student) => set((state) => ({ students: [...state.students, student] })),
       updateStudent: (id, updates) => set((state) => ({
@@ -231,6 +249,8 @@ export const useAppStore = create<AppState>()(
         rapidTests: data.rapidTests || [],
         rapidResults: data.rapidResults || [],
         monitoringDocs: data.monitoringDocs || [],
+        schoolStructure: data.schoolStructure || state.schoolStructure,
+        daybookEntries: data.daybookEntries || [],
       })),
 
       mergeData: (data) => set((state) => ({
@@ -241,6 +261,7 @@ export const useAppStore = create<AppState>()(
         rapidTests: [...state.rapidTests, ...(data.rapidTests || []).filter(n => !state.rapidTests.find(e => e.id === n.id))],
         rapidResults: [...state.rapidResults, ...(data.rapidResults || []).filter(n => !state.rapidResults.find(e => e.studentId === n.studentId && e.testId === n.testId))],
         monitoringDocs: [...state.monitoringDocs, ...(data.monitoringDocs || []).filter(n => !state.monitoringDocs.find(e => e.id === n.id))],
+        daybookEntries: [...state.daybookEntries, ...(data.daybookEntries || []).filter(n => !state.daybookEntries.find(e => e.date === n.date && e.slotId === n.slotId))],
       })),
 
       reset: () => set({
@@ -252,6 +273,8 @@ export const useAppStore = create<AppState>()(
         rapidTests: [],
         rapidResults: [],
         monitoringDocs: [],
+        schoolStructure: undefined,
+        daybookEntries: [],
         toasts: []
       }),
     }),

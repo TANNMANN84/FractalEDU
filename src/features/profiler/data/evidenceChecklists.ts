@@ -91,7 +91,7 @@ export const EVIDENCE_DOMAINS = {
             'Paragraph structuring (TEEL/PEEL)', 
             'Editing checklists', 
             'Scaffolded writing tasks',
-            'Use of graphic organizers'
+            'Use of graphic organisers'
         ],
         'Spelling': [
             'Etymological focus', 

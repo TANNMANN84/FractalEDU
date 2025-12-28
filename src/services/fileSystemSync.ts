@@ -112,6 +112,25 @@ export const fileSystemSync = {
 
     try {
       const fileHandle = await activeHandle.getFileHandle('fractal_db.json', { create: true });
+      
+      // --- SAFETY CHECK: PREVENT DATA LOSS ---
+      try {
+          const existingFile = await fileHandle.getFile();
+          const text = await existingFile.text();
+          // If existing file has significant data (>200 chars) and new data is empty (<200 chars)
+          if (text.length > 200) {
+              const newContent = JSON.stringify(appData);
+              if (newContent.length < 200) {
+                  console.warn("⚠️ CRITICAL: Auto-save blocked. Attempted to overwrite existing data with empty state.");
+                  alert("Sync Safety Triggered: Your local data is empty, but your cloud file has data.\n\nAuto-save has been blocked to prevent overwriting your backup.\n\nPlease go to Settings > Cloud Sync and click 'Pull Data'.");
+                  return false;
+              }
+          }
+      } catch (readError) {
+          // File doesn't exist or can't be read, safe to write.
+      }
+      // ---------------------------------------
+
       const writable = await fileHandle.createWritable();
       await writable.write(JSON.stringify(appData, null, 2));
       await writable.close();
@@ -166,27 +185,24 @@ export const fileSystemSync = {
 
   // 5. Sync Down (Load)
   async syncDown(passedHandle?: any): Promise<{ appData: any; files: Record<string, string> }> {
-      // ... (Keep your existing syncDown logic exactly as it was) ...
-      // Just ensure it uses 'passedHandle || activeHandle'
-      
-      // For brevity in this snippet, I assume you copy-paste your existing syncDown logic here
-      // but change the first line to:
       const handle = (passedHandle || activeHandle) as FileSystemDirectoryHandle;
       
-      // ... rest of your syncDown code ...
-      // (If you need me to write out the full syncDown again, let me know, 
-      // otherwise paste your original syncDown logic here)
-      
-      // --- Placeholder for your existing syncDown ---
       if (isSimulation) {
-        // ... sim logic ...
-        return { appData: {}, files: {} }; // dummy
+        const dbStr = sessionStorage.getItem('fractal_sync_sim_db');
+        return { appData: dbStr ? JSON.parse(dbStr) : {}, files: {} };
       }
       
-      const fileHandle = await handle.getFileHandle('fractal_db.json');
-      const file = await fileHandle.getFile();
-      const text = await file.text();
-      // ... etc ...
-      return { appData: JSON.parse(text), files: {} };
+      if (!handle) throw new Error("No connection handle available");
+
+      try {
+          const fileHandle = await handle.getFileHandle('fractal_db.json');
+          const file = await fileHandle.getFile();
+          const text = await file.text();
+          const appData = JSON.parse(text);
+          return { appData, files: {} };
+      } catch (e) {
+          console.warn("Sync Down: Could not read fractal_db.json", e);
+          return { appData: null, files: {} };
+      }
   }
 };

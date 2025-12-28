@@ -21,6 +21,7 @@ export const parseLegacyData = (json: any): { exam: Exam, students: Student[], r
         id: examId,
         name: rawExam.name || 'Imported Exam',
         date: rawExam.date || new Date().toISOString(),
+        type: rawExam.type || 'Summative',
         cohort: rawExam.cohort || '12',
         totalMarks: rawExam.totalMarks || calculatedTotal,
         questions: questions,

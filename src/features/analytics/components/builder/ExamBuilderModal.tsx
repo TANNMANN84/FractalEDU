@@ -26,6 +26,7 @@ export const ExamBuilderModal: React.FC<ExamBuilderModalProps> = ({ onClose, exa
     const [examName, setExamName] = useState('');
     const [examDate, setExamDate] = useState(new Date().toISOString().split('T')[0]);
     const [examCohort, setExamCohort] = useState<string>('12');
+    const [examType, setExamType] = useState<string>('Summative');
     const [selectedSyllabus, setSelectedSyllabus] = useState<string>('chemistry');
     const [questions, setQuestions] = useState<Question[]>([]);
 
@@ -46,6 +47,7 @@ export const ExamBuilderModal: React.FC<ExamBuilderModalProps> = ({ onClose, exa
             setExamName(examToEdit.name);
             setExamDate(examToEdit.date);
             setExamCohort(examToEdit.cohort || '12');
+            setExamType(examToEdit.type || 'Summative');
             setSelectedSyllabus(examToEdit.syllabusId || 'chemistry');
             setQuestions(examToEdit.questions || []);
         } else {
@@ -88,6 +90,7 @@ export const ExamBuilderModal: React.FC<ExamBuilderModalProps> = ({ onClose, exa
             name: examName,
             date: examDate,
             cohort: examCohort,
+            type: examType,
             totalMarks: totalMarks,
             questions: questions,
             syllabusId: selectedSyllabus,
@@ -298,8 +301,8 @@ export const ExamBuilderModal: React.FC<ExamBuilderModalProps> = ({ onClose, exa
                     </div>
                 </div>
 
-                <div className="p-4 border-b border-slate-200 grid grid-cols-4 gap-4 bg-white shrink-0">
-                    <div className="col-span-1">
+                <div className="p-4 border-b border-slate-200 grid grid-cols-1 md:grid-cols-5 gap-4 bg-white shrink-0">
+                    <div className="md:col-span-2">
                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Exam Name</label>
                         <input 
                             type="text" 
@@ -309,7 +312,7 @@ export const ExamBuilderModal: React.FC<ExamBuilderModalProps> = ({ onClose, exa
                             placeholder="e.g. Year 11 Chemistry Yearly"
                         />
                     </div>
-                    <div className="col-span-1">
+                    <div>
                          <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Date</label>
                          <input 
                             type="date" 
@@ -318,7 +321,19 @@ export const ExamBuilderModal: React.FC<ExamBuilderModalProps> = ({ onClose, exa
                             className="w-full border-b border-slate-300 focus:border-brand-500 outline-none py-1 font-medium" 
                         />
                     </div>
-                    <div className="col-span-1">
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Type</label>
+                        <select 
+                            value={examType} 
+                            onChange={e => setExamType(e.target.value)}
+                            className="w-full border-b border-slate-300 focus:border-brand-500 outline-none py-1 font-medium bg-transparent"
+                        >
+                            <option value="Summative">Summative</option>
+                            <option value="Formative">Formative</option>
+                            <option value="Diagnostic">Diagnostic</option>
+                        </select>
+                    </div>
+                    <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Cohort</label>
                         <select 
                             value={examCohort} 
@@ -333,7 +348,7 @@ export const ExamBuilderModal: React.FC<ExamBuilderModalProps> = ({ onClose, exa
                             <option value="12">Year 12</option>
                         </select>
                     </div>
-                    <div className="col-span-1">
+                    <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Syllabus</label>
                         <select 
                             value={selectedSyllabus} 

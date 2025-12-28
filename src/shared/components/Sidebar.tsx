@@ -10,26 +10,32 @@ import {
   Settings,
   Hexagon,
   ClipboardCheck,
-  FileText
+  FileText,
+  NotebookTabs,
+  
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
   const navItems = [
+    { name: 'Day2Day', path: '/day2day', icon: NotebookTabs },
     { name: 'Classes & Students', path: '/classes', icon: Users },
     { name: 'Exam Analytics', path: '/analytics', icon: BarChart2 },
     { name: 'Pre/Post Diagnostics', path: '/diagnostics', icon: TrendingUpDown },
     { name: 'Junior Monitoring', path: '/monitoring', icon: ClipboardCheck  },
     { name: 'Reporting', path: '/reporting', icon: FileText },
+    
   ];
 
   return (
     <div className="flex flex-col h-full w-20 lg:w-64 bg-slate-900 text-white border-r border-slate-800 transition-all duration-300">
       {/* Logo Area */}
       <div className="h-16 flex items-center justify-center lg:justify-start lg:px-6 border-b border-slate-800">
-        <Hexagon className="w-8 h-8 text-brand-400" strokeWidth={2.5} />
-        <span className="hidden lg:block ml-3 font-bold text-xl tracking-tight text-white">
-          Fractal<span className="text-brand-400">EDU</span>
-        </span>
+        <NavLink to="/" className="flex items-center hover:opacity-80 transition-opacity">
+          <Hexagon className="w-8 h-8 text-brand-400" strokeWidth={2.5} />
+          <span className="hidden lg:block ml-3 font-bold text-xl tracking-tight text-white">
+            Fractal<span className="text-brand-400">EDU</span>
+          </span>
+        </NavLink>
       </div>
 
       {/* Navigation */}

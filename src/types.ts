@@ -1,3 +1,5 @@
+import { ReactNode } from "react";
+
 export type UUID = string;
 
 // --- Enums ---
@@ -152,7 +154,10 @@ export interface Student {
 
   // New Fields
   plans?: StudentPlans;
-  behaviourHistory?: Record<number, { positives: number; negatives: number }>;
+  behaviourHistory?: Record<number, {
+      data: number;
+      lst: number; positives: number; negatives: number 
+}>;
   concerns?: Record<string, string>; // Key: concern name, Value: note
 
   naplan?: {
@@ -247,6 +252,7 @@ export interface Question {
 }
 
 export interface Exam {
+  type: string;
   title: any;
   maxMarks: number;
   id: UUID;
@@ -374,3 +380,40 @@ export interface ReviewPackage {
 
 export interface StudentTransferPackage { dataType: 'studentTransfer'; student: Student; files: { [id: string]: string }; }
 export interface ClassTransferPackage { dataType: 'classTransfer'; classGroup: ClassGroup; students: Student[]; monitoringDoc: MonitoringDoc | null; files: { [id: string]: string }; }
+
+// --- Timetable Structure ---
+export type PeriodType = 'Teaching' | 'Break' | 'Admin' | 'Sport' | 'RollCall';
+
+export interface TimeSlot {
+    id: string;
+    name: string;
+    type: PeriodType;
+    startTime: string; // HH:mm
+    endTime: string;   // HH:mm
+    duration: number;  // minutes
+    classId?: string;
+    room?: string;
+    label?: string; // For duties or custom notes
+}
+
+export interface DaySchedule {
+    id: string;
+    day: string; // "Monday", "Tuesday", etc.
+    week: 'A' | 'B' | null; // null if weekly
+    slots: TimeSlot[];
+}
+
+export interface SchoolStructure {
+    cycle: 'Weekly' | 'Fortnightly';
+    termStartDate?: string; // ISO Date string (YYYY-MM-DD) representing the Monday of Week A
+    termDurationWeeks?: number;
+    isTimetableLocked?: boolean;
+    days: DaySchedule[];
+}
+
+export interface DaybookEntry {
+    id: string;
+    date: string; // YYYY-MM-DD
+    slotId: string;
+    content: string;
+}

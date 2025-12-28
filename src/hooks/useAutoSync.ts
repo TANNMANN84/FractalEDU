@@ -9,11 +9,39 @@ export const useAutoSync = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const saveTimeout = useRef<NodeJS.Timeout>();
+  const previousDataJson = useRef<string>("");
+  const isFirstRun = useRef(true);
+  const storeRef = useRef(store);
+
+  // Keep store ref updated for async callbacks
+  useEffect(() => {
+    storeRef.current = store;
+  }, [store]);
 
   // 1. Check Connection Status (Robust)
   const checkConnection = useCallback(async () => {
     const restored = await fileSystemSync.restoreConnection();
     setIsConnected(restored);
+
+    if (restored) {
+      // Safety Check: If we just restored connection and local data is empty,
+      // we should warn the user if remote data exists, rather than letting auto-save overwrite it.
+      const currentStore = storeRef.current;
+      const isEmpty = (!currentStore.students || currentStore.students.length === 0) && 
+                      (!currentStore.classes || currentStore.classes.length === 0);
+
+      if (isEmpty) {
+        try {
+          const { appData } = await fileSystemSync.syncDown();
+          if (appData && (appData.students?.length > 0 || appData.classes?.length > 0)) {
+             alert("Cloud Sync Connected: Remote data found but local data is empty.\n\nPlease go to Settings > Cloud Sync and click 'Pull Data' to restore your data.\n\nAuto-save is paused to prevent data loss.");
+             setIsConnected(false); // Force disconnect to prevent auto-save loop
+          }
+        } catch (e) {
+          // Remote file likely doesn't exist, which is fine.
+        }
+      }
+    }
   }, []);
 
   // 2. Lifecycle Checks: Mount, Focus, Navigation
@@ -29,14 +57,39 @@ export const useAutoSync = () => {
   const saveNow = useCallback(async () => {
     if (!isConnected) return;
 
-    console.log("☁️ Syncing...");
-
     // Prepare data (exclude UI state, just save data)
     const dataToSave = {
+      teacherProfile: store.teacherProfile,
       students: store.students,
       classes: store.classes,
-      assessments: store.exams, // Adjust based on your store keys
+      exams: store.exams,
+      results: store.results,
+      rapidTests: store.rapidTests,
+      rapidResults: store.rapidResults,
+      monitoringDocs: store.monitoringDocs,
+      schoolStructure: store.schoolStructure,
+      daybookEntries: store.daybookEntries,
     };
+
+    const currentJson = JSON.stringify(dataToSave);
+
+    // Prevent saving if data hasn't changed since last save
+    if (currentJson === previousDataJson.current) return;
+
+    // Prevent saving empty data if this is the first run after load (Sync Loop Protection)
+    // This handles the "Refresh -> Connect -> AutoSave Empty" bug.
+    const isEmpty = (!store.students || store.students.length === 0) && (!store.classes || store.classes.length === 0);
+    if (isFirstRun.current && isEmpty) {
+        isFirstRun.current = false;
+        previousDataJson.current = currentJson;
+        console.log("☁️ Initial empty state detected - skipping auto-save to protect remote data.");
+        return;
+    }
+
+    previousDataJson.current = currentJson;
+    isFirstRun.current = false;
+
+    console.log("☁️ Syncing...");
 
     try {
       const success = await fileSystemSync.quickSave(dataToSave);
@@ -52,7 +105,19 @@ export const useAutoSync = () => {
       console.error("Sync error:", error);
       setIsConnected(false);
     }
-  }, [isConnected, store.students, store.classes, store.exams]);
+  }, [
+    isConnected, 
+    store.teacherProfile,
+    store.students, 
+    store.classes, 
+    store.exams, 
+    store.results,
+    store.rapidTests,
+    store.rapidResults,
+    store.monitoringDocs,
+    store.schoolStructure,
+    store.daybookEntries
+  ]);
 
   // 2. Watch for changes
   useEffect(() => {

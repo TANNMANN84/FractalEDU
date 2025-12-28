@@ -10,6 +10,8 @@ import { MonitoringDashboard } from './features/monitoring/MonitoringDashboard';
 import { ToastContainer } from './shared/components/ToastContainer';
 import { ThemeProvider } from './context/ThemeContext';
 import { useAutoSync } from '@/hooks/useAutoSync';
+import { LandingPage } from './LandingPage';
+import { Day2Day } from './features/day2day/Day2Day';
 
 // Lazy load the named export 'Reporting' to isolate PDF libraries
 const Reporting = lazy(() => import('./features/reporting/Reporting').then(module => ({ default: module.Reporting })));
@@ -71,13 +73,14 @@ const FractalApp: React.FC = () => {
     <Routes>
       <Route path="/" element={<RootLayout />}>
         {/* Default Redirect */}
-        <Route index element={<Navigate to="/profiler" replace />} />
+        <Route index element={<LandingPage />} />
 
         {/* CRITICAL FIX: Added "/*" to these paths.
             This tells the Router: "Allow sub-paths like /classes/seating to pass through 
             to the component instead of getting blocked or redirected."
         */}
         <Route path="profiler/*" element={<Profiler />} />
+        <Route path="day2day/*" element={<Day2Day />} />
         <Route path="classes/*" element={<Classes />} />
         <Route path="analytics/*" element={<Analytics />} />
         <Route path="diagnostics/*" element={<Diagnostics />} />
@@ -91,7 +94,7 @@ const FractalApp: React.FC = () => {
         } />
 
         {/* Catch-all Redirect */}
-        <Route path="*" element={<Navigate to="/profiler" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
   );

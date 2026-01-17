@@ -1,8 +1,9 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAppStore } from '@/store';
 import { useTheme } from '../../context/ThemeContext';
-import { UserPlus, Layout, Trash2, Database, Save, Upload, User, Users, Server, RotateCw, Mail, School, BookOpen, Briefcase, Cloud, RefreshCw, Link as LinkIcon, Download, Sun, Moon, Monitor, FileText, PenTool, Edit3, Image as ImageIcon, Eraser, Clock, CalendarRange, Plus, Minus, Edit2, X, ArrowDown, ArrowUp } from 'lucide-react';
+import { UserPlus, Layout, Trash2, Database, Save, Upload, User, Users, Server, RotateCw, Mail, School, BookOpen, Briefcase, Cloud, RefreshCw, Link as LinkIcon, Download, Sun, Moon, Monitor, FileText, PenTool, Edit3, Image as ImageIcon, Eraser, Clock, CalendarRange, Plus, Minus, Edit2, X, ArrowDown, ArrowUp, CloudSun, Search, MapPin, CheckCircle, LayoutDashboard, CheckSquare, AlertCircle } from 'lucide-react';
 import { AddStudentModal } from '../admin/AddStudentModal';
 import { CreateClassModal } from '../admin/CreateClassModal';
 import { ManageStudentsModal } from '../admin/ManageStudentsModal';
@@ -16,7 +17,7 @@ import { fileSystemSync } from '@/services/fileSystemSync';
 import { ReviewPackage, Student, ClassGroup, MonitoringDoc, BackupFile, WellbeingStatus, SupportLevel, SchoolStructure, DaySchedule, TimeSlot, PeriodType } from '@/types';
 import { useAutoSync } from '@/hooks/useAutoSync';
 
-type Tab = 'Profile' | 'Structure' | 'Students' | 'Classes' | 'System';
+type Tab = 'Overview' | 'Profile' | 'Structure' | 'Students' | 'Classes' | 'System';
 
 export const Settings: React.FC = () => {
   const { 
@@ -29,6 +30,7 @@ export const Settings: React.FC = () => {
       rapidTests,
       rapidResults,
       monitoringDocs,
+      daybookEntries,
       teacherProfile,
       setTeacherProfile,
       addStudent,
@@ -39,8 +41,12 @@ export const Settings: React.FC = () => {
 
   const { theme, setTheme } = useTheme();
   const { isConnected } = useAutoSync();
+  const location = useLocation();
 
-  const [activeTab, setActiveTab] = useState<Tab>(() => teacherProfile?.name ? 'Structure' : 'Profile');
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
+      if (location.state?.tab) return location.state.tab;
+      return 'Overview';
+  });
   const [isProcessing, setIsProcessing] = useState(false);
   
   // Modal States
@@ -67,7 +73,13 @@ export const Settings: React.FC = () => {
       role: teacherProfile?.role || '',
       faculty: teacherProfile?.faculty || 'Science',
       schoolName: teacherProfile?.schoolName || '',
-      signature: teacherProfile?.signature || ''
+      signature: teacherProfile?.signature || '',
+      weatherConfig: teacherProfile?.weatherConfig || {
+          enabled: true,
+          locationName: 'Inverell',
+          latitude: -29.7725,
+          longitude: 151.1139
+      }
   });
 
   // Signature Canvas State
@@ -113,7 +125,13 @@ export const Settings: React.FC = () => {
               role: teacherProfile.role || '',
               faculty: teacherProfile.faculty || 'Science',
               schoolName: teacherProfile.schoolName || '',
-              signature: teacherProfile.signature || ''
+              signature: teacherProfile.signature || '',
+              weatherConfig: teacherProfile.weatherConfig || {
+                  enabled: true,
+                  locationName: 'Inverell',
+                  latitude: -29.7725,
+                  longitude: 151.1139
+              }
           }));
       }
   }, [teacherProfile]);
@@ -126,6 +144,65 @@ export const Settings: React.FC = () => {
           if (globalHandle) setSyncHandle(globalHandle);
       }
   }, [isConnected, syncHandle]);
+
+  // Weather Search State
+  const [locationQuery, setLocationQuery] = useState('');
+  const [locationResults, setLocationResults] = useState<any[]>([]);
+
+  const searchLocation = async () => {
+      if (!locationQuery) return;
+      try {
+          const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(locationQuery)}&count=5&language=en&format=json`);
+          const data = await res.json();
+          if (data.results) setLocationResults(data.results);
+      } catch (e) {
+          console.error(e);
+      }
+  };
+
+  // --- Overview Stats ---
+  const overviewStats = useMemo(() => {
+      // Profile
+      const profileFields = ['title', 'name', 'email', 'role', 'faculty', 'schoolName', 'signature'];
+      const filledProfile = profileFields.filter(f => (profileData as any)[f]);
+      const profilePct = Math.round((filledProfile.length / profileFields.length) * 100);
+
+      // Students
+      const genderCounts: Record<string, number> = { Male: 0, Female: 0 };
+      const cohortCounts: Record<string, number> = {};
+      students.forEach(s => {
+          const g = s.profile?.gender || 'Unknown';
+          genderCounts[g] = (genderCounts[g] || 0) + 1;
+          const c = s.cohort;
+          cohortCounts[c] = (cohortCounts[c] || 0) + 1;
+      });
+
+      // Structure Details
+      let periodCount = 0;
+      let periodDuration = 0;
+      if (schoolStructure.days.length > 0) {
+          const dayWithSlots = schoolStructure.days.find(d => d.slots.some(s => s.type === 'Teaching'));
+          if (dayWithSlots) {
+              const teachingSlots = dayWithSlots.slots.filter(s => s.type === 'Teaching');
+              periodCount = teachingSlots.length;
+              if (periodCount > 0) {
+                 periodDuration = teachingSlots[0].duration;
+              }
+          }
+      }
+
+      return {
+          profilePct,
+          students: { total: students.length, gender: genderCounts, cohorts: cohortCounts },
+          classes: { total: classes.length },
+          structure: { 
+              configured: schoolStructure.days.length > 0, 
+              cycle: schoolStructure.cycle,
+              periodCount,
+              periodDuration
+          }
+      };
+  }, [profileData, students, classes, schoolStructure]);
 
   // --- Handlers ---
 
@@ -261,7 +338,12 @@ export const Settings: React.FC = () => {
             rapidTests, 
             rapidResults, 
             monitoringDocs,
-            schoolStructure: savedStructure // Include in Backup
+            daybookEntries,
+            schoolStructure: savedStructure, // Include in Backup
+            metadata: {
+                lastUpdated: new Date().toISOString(),
+                updatedBy: teacherProfile?.name || 'User'
+            }
         };
         
         const backup: BackupFile = { dataType: 'fullBackup', appData, files };
@@ -351,10 +433,12 @@ export const Settings: React.FC = () => {
           }
           
           console.log("Restoring application state...");
+
           const safeAppData = {
               ...json.appData,
               rapidTests: json.appData.rapidTests || [],
-              rapidResults: json.appData.rapidResults || []
+              rapidResults: json.appData.rapidResults || [],
+              daybookEntries: json.appData.daybookEntries || []
           };
           
           replaceAllData(safeAppData);
@@ -442,8 +526,24 @@ export const Settings: React.FC = () => {
       if (!syncHandle && !isConnected) return;
       setIsProcessing(true);
       try {
-          const appData = { teacherProfile, students, classes, exams, results, rapidTests, rapidResults, monitoringDocs, schoolStructure: savedStructure };
+          const appData = { 
+              teacherProfile, 
+              students, 
+              classes, 
+              exams, 
+              results, 
+              rapidTests, 
+              rapidResults, 
+              monitoringDocs, 
+              daybookEntries, 
+              schoolStructure: savedStructure,
+              metadata: {
+                  lastUpdated: new Date().toISOString(),
+                  updatedBy: teacherProfile?.name || 'User'
+              }
+          };
           await fileSystemSync.syncUp(syncHandle || undefined, appData);
+          localStorage.setItem('fractal_last_sync', appData.metadata.lastUpdated);
           addToast('Synced UP to local folder successfully.', 'success');
       } catch (err: any) {
           console.error(err);
@@ -453,36 +553,77 @@ export const Settings: React.FC = () => {
       }
   };
 
+  const performRestore = async (appData: any, files: any) => {
+      try {
+          await storageService.clearFileContent();
+          if (files) {
+              for (const [name, content] of Object.entries(files)) {
+                  await storageService.saveFileContent(name, content as string); 
+              }
+          }
+
+          if (appData.metadata?.lastUpdated) {
+              localStorage.setItem('fractal_last_sync', appData.metadata.lastUpdated);
+          }
+
+          replaceAllData(appData);
+          addToast('Synced DOWN from local folder successfully.', 'success');
+      } catch (err: any) {
+          console.error(err);
+          addToast(err.message || 'Restore failed.', 'error');
+      }
+  };
+
   const handleSyncDown = async () => {
       if (!syncHandle && !isConnected) return;
       
-      setConfirmAction({
-          isOpen: true,
-          title: "Confirm Cloud Pull",
-          message: "This will OVERWRITE your current app data with data from the folder. Continue?",
-          isDanger: true,
-          onConfirm: async () => {
-              setIsProcessing(true);
-              try {
-                  const { appData, files } = await fileSystemSync.syncDown(syncHandle || undefined);
-                  
-                  await storageService.clearFileContent();
-                  if (files) {
-                      for (const [name, content] of Object.entries(files)) {
-                          await storageService.saveFileContent(name, content); 
-                      }
-                  }
+      setIsProcessing(true);
+      try {
+          // 1. Fetch data first to inspect it
+          const { appData, files } = await fileSystemSync.syncDown(syncHandle || undefined);
+          
+          // 2. Compare timestamps
+          const remoteTime = appData.metadata?.lastUpdated ? new Date(appData.metadata.lastUpdated) : null;
+          const localTimeStr = localStorage.getItem('fractal_last_sync');
+          const localTime = localTimeStr ? new Date(localTimeStr) : null;
 
-                  replaceAllData(appData);
-                  addToast('Synced DOWN from local folder successfully.', 'success');
-              } catch (err: any) {
-                  console.error(err);
-                  addToast(err.message || 'Sync Down failed.', 'error');
-              } finally {
-                  setIsProcessing(false);
+          let msg = "This will OVERWRITE your current app data with data from the folder.";
+          
+          if (remoteTime) {
+              msg += `\n\n☁️ Remote Save: ${remoteTime.toLocaleString()}`;
+              if (appData.metadata?.updatedBy) msg += ` (by ${appData.metadata.updatedBy})`;
+          }
+          
+          if (localTime) {
+              msg += `\n💻 Local Sync: ${localTime.toLocaleString()}`;
+          }
+
+          if (remoteTime && localTime) {
+              if (remoteTime.getTime() > localTime.getTime()) {
+                  msg += "\n\n✅ Remote is NEWER. Recommended.";
+              } else if (remoteTime.getTime() < localTime.getTime()) {
+                  msg += "\n\n⚠️ Remote is OLDER. You might lose recent work.";
+              } else {
+                  msg += "\n\nℹ️ Timestamps match.";
               }
           }
-      });
+
+          // 3. Ask for confirmation with details
+          setConfirmAction({
+              isOpen: true,
+              title: "Confirm Cloud Pull",
+              message: msg,
+              isDanger: true,
+              onConfirm: async () => {
+                  await performRestore(appData, files);
+              }
+          });
+      } catch (err: any) {
+          console.error(err);
+          addToast(err.message || 'Sync Down failed.', 'error');
+      } finally {
+          setIsProcessing(false);
+      }
   };
 
   // --- Helper: Sort Breaks ---
@@ -653,6 +794,7 @@ export const Settings: React.FC = () => {
 
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden min-h-[600px] flex flex-col">
           <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
+              <TabButton id="Overview" icon={LayoutDashboard} label="Overview" />
               <TabButton id="Profile" icon={User} label="My Profile" />
               <TabButton id="Structure" icon={CalendarRange} label="School Structure" />
               <TabButton id="Students" icon={Users} label="Students" />
@@ -661,6 +803,129 @@ export const Settings: React.FC = () => {
           </div>
 
           <div className="p-8 flex-1 overflow-y-auto">
+              
+              {/* OVERVIEW TAB */}
+              {activeTab === 'Overview' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in">
+                      {/* Profile Card */}
+                      <div 
+                          onClick={() => setActiveTab('Profile')}
+                          className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:border-brand-400 hover:shadow-md transition-all cursor-pointer group"
+                      >
+                          <div className="flex justify-between items-start mb-4">
+                              <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                                  <User className="w-5 h-5 text-brand-600" /> My Profile
+                              </h3>
+                              <span className={`text-xs font-bold px-2 py-1 rounded-full ${overviewStats.profilePct === 100 ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                                  {overviewStats.profilePct}% Complete
+                              </span>
+                          </div>
+                          <div className="w-full bg-slate-100 dark:bg-slate-700 h-2 rounded-full overflow-hidden mb-2">
+                              <div className="bg-brand-600 h-full transition-all duration-500" style={{ width: `${overviewStats.profilePct}%` }}></div>
+                          </div>
+                          <p className="text-sm text-slate-500 dark:text-slate-400">
+                              {overviewStats.profilePct === 100 ? 'Profile fully configured.' : 'Complete your profile to enable all features.'}
+                          </p>
+                      </div>
+
+                      {/* Structure Card */}
+                      <div 
+                          onClick={() => setActiveTab('Structure')}
+                          className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:border-brand-400 hover:shadow-md transition-all cursor-pointer group"
+                      >
+                          <div className="flex justify-between items-start mb-4">
+                              <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                                  <CalendarRange className="w-5 h-5 text-purple-600" /> School Structure
+                              </h3>
+                              {overviewStats.structure.configured ? (
+                                  <CheckCircle className="w-5 h-5 text-green-500" />
+                              ) : (
+                                  <AlertCircle className="w-5 h-5 text-amber-500" />
+                              )}
+                          </div>
+                          <p className="text-sm text-slate-600 dark:text-slate-300 mb-1">
+                              Cycle: <span className="font-bold">{overviewStats.structure.cycle}</span>
+                          </p>
+                          <p className="text-sm text-slate-500 dark:text-slate-400">
+                              {overviewStats.structure.configured 
+                                ? `Timetable structure setup & currently active. ${overviewStats.structure.periodCount} periods of ${overviewStats.structure.periodDuration} mins.` 
+                                : 'Bell times and periods not yet configured.'}
+                          </p>
+                      </div>
+
+                      {/* Students & Classes Card */}
+                      <div 
+                          onClick={() => setActiveTab('Students')}
+                          className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:border-brand-400 hover:shadow-md transition-all cursor-pointer group md:col-span-2 lg:col-span-1"
+                      >
+                          <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-4">
+                              <Users className="w-5 h-5 text-blue-600" /> Students & Classes
+                          </h3>
+                          <div className="grid grid-cols-2 gap-4 mb-4">
+                              <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-lg">
+                                  <div className="text-2xl font-bold text-slate-800 dark:text-slate-100">{overviewStats.students.total}</div>
+                                  <div className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold">Students</div>
+                                  <div className="text-xs text-slate-400 mt-1">
+                                      {overviewStats.students.gender.Male || 0} M • {overviewStats.students.gender.Female || 0} F
+                                  </div>
+                              </div>
+                              <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-lg">
+                                  <div className="text-2xl font-bold text-slate-800 dark:text-slate-100">{overviewStats.classes.total}</div>
+                                  <div className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold">Classes</div>
+                                  <div className="text-xs text-slate-400 mt-1">
+                                      Active Groups
+                                  </div>
+                              </div>
+                          </div>
+                          
+                          {/* Cohort Breakdown */}
+                          <div className="space-y-2">
+                              <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Cohort Breakdown</h4>
+                              <div className="grid grid-cols-3 gap-2">
+                                  {Object.entries(overviewStats.students.cohorts).sort().map(([cohort, count]) => (
+                                      <div key={cohort} className="bg-slate-50 dark:bg-slate-900 px-2 py-1 rounded text-xs flex justify-between items-center">
+                                          <span className="text-slate-600 dark:text-slate-300">{cohort.replace('Year ', 'Yr')}</span>
+                                          <span className="font-bold text-slate-800 dark:text-slate-100">{count}</span>
+                                      </div>
+                                  ))}
+                              </div>
+                          </div>
+                      </div>
+
+                      {/* System Card */}
+                      <div 
+                          onClick={() => setActiveTab('System')}
+                          className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:border-brand-400 hover:shadow-md transition-all cursor-pointer group md:col-span-2 lg:col-span-1"
+                      >
+                          <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-4">
+                              <Server className="w-5 h-5 text-slate-600" /> System Status
+                          </h3>
+                          <div className={`flex items-center gap-2 p-3 rounded-lg mb-3 ${isConnected ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>
+                              <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-slate-400'}`}></div>
+                              <span className="text-sm font-bold">{isConnected ? 'Sync Active' : 'Local Storage Only'}</span>
+                          </div>
+                          
+                          <div className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
+                              <div className="flex justify-between border-b border-slate-100 dark:border-slate-700 pb-2">
+                                  <span>Last Sync</span>
+                                  <span className="font-mono text-xs">{localStorage.getItem('fractal_last_sync') ? new Date(localStorage.getItem('fractal_last_sync')!).toLocaleString() : 'Never'}</span>
+                              </div>
+                              <div className="flex justify-between border-b border-slate-100 dark:border-slate-700 pb-2">
+                                  <span>Sync Folder</span>
+                                  <span className="font-mono text-xs truncate max-w-[150px]" title={syncHandle?.name}>{syncHandle?.name || 'N/A'}</span>
+                              </div>
+                              <div className="flex justify-between border-b border-slate-100 dark:border-slate-700 pb-2">
+                                  <span>Data Points</span>
+                                  <span className="font-bold">{students.length + classes.length + exams.length + results.length}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                  <span>App Version</span>
+                                  <span className="font-mono text-xs bg-slate-100 dark:bg-slate-900 px-1.5 rounded">v1.2.4 (Beta)</span>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              )}
               
               {/* PROFILE TAB */}
               {activeTab === 'Profile' && (
@@ -746,6 +1011,67 @@ export const Settings: React.FC = () => {
                                   className="w-full pl-10 p-2 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
                               />
                           </div>
+                      </div>
+
+                      {/* Weather Settings */}
+                      <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+                          <div className="flex justify-between items-center mb-4">
+                              <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                                  <CloudSun className="w-4 h-4" /> Weather Widget
+                              </label>
+                              <label className="relative inline-flex items-center cursor-pointer">
+                                  <input 
+                                      type="checkbox" 
+                                      className="sr-only peer"
+                                      checked={profileData.weatherConfig.enabled}
+                                      onChange={e => setProfileData(prev => ({ ...prev, weatherConfig: { ...prev.weatherConfig, enabled: e.target.checked } }))}
+                                  />
+                                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-300 dark:peer-focus:ring-brand-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-brand-600"></div>
+                              </label>
+                          </div>
+
+                          {profileData.weatherConfig.enabled && (
+                              <div className="space-y-3">
+                                  <div className="flex gap-2">
+                                      <div className="relative flex-1">
+                                          <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+                                          <input 
+                                              value={locationQuery}
+                                              onChange={e => setLocationQuery(e.target.value)}
+                                              onKeyDown={e => e.key === 'Enter' && searchLocation()}
+                                              className="w-full pl-10 p-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm outline-none focus:ring-2 focus:ring-brand-500"
+                                              placeholder="Search city..."
+                                          />
+                                      </div>
+                                      <button onClick={searchLocation} className="px-3 py-2 bg-slate-200 dark:bg-slate-700 rounded-lg text-sm font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">Search</button>
+                                  </div>
+
+                                  {locationResults.length > 0 && (
+                                      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+                                          {locationResults.map((loc: any) => (
+                                              <button 
+                                                  key={loc.id}
+                                                  onClick={() => {
+                                                      setProfileData(prev => ({ ...prev, weatherConfig: { ...prev.weatherConfig, locationName: loc.name, latitude: loc.latitude, longitude: loc.longitude } }));
+                                                      setLocationResults([]);
+                                                      setLocationQuery('');
+                                                  }}
+                                                  className="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 border-b border-slate-100 dark:border-slate-800 last:border-0 flex justify-between items-center"
+                                              >
+                                                  <span>{loc.name}, {loc.admin1}, {loc.country}</span>
+                                                  {profileData.weatherConfig.latitude === loc.latitude && <CheckCircle className="w-4 h-4 text-green-500" />}
+                                              </button>
+                                          ))}
+                                      </div>
+                                  )}
+
+                                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/50 p-2 rounded border border-slate-200 dark:border-slate-700">
+                                      <MapPin className="w-3 h-3" />
+                                      Current: <span className="font-bold text-slate-700 dark:text-slate-200">{profileData.weatherConfig.locationName}</span>
+                                      <span className="font-mono opacity-75">({profileData.weatherConfig.latitude.toFixed(2)}, {profileData.weatherConfig.longitude.toFixed(2)})</span>
+                                  </div>
+                              </div>
+                          )}
                       </div>
 
                       {/* Signature Section */}

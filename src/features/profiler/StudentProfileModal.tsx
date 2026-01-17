@@ -172,17 +172,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({ studen
                 <h3 className="font-semibold text-slate-800 flex items-center gap-2">
                   <Activity className="w-4 h-4 text-rose-500" /> Wellbeing Snapshot
                 </h3>
-                <div className={`p-4 rounded-lg border ${
-                  currentStudent.wellbeing.status === 'green' ? 'bg-green-50 border-green-100' :
-                  currentStudent.wellbeing.status === 'amber' ? 'bg-amber-50 border-amber-100' : 'bg-red-50 border-red-100'
-                }`}>
-                  <div className="flex items-center justify-between mb-2">
-                     <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Current Status</span>
-                     <span className={`w-3 h-3 rounded-full ${
-                        currentStudent.wellbeing.status === 'green' ? 'bg-green-500' :
-                        currentStudent.wellbeing.status === 'amber' ? 'bg-amber-500' : 'bg-red-500'
-                     }`} />
-                  </div>
+                <div className="p-4 rounded-lg border bg-slate-50 border-slate-100">
                   <p className="text-sm text-slate-700 italic">"{currentStudent.wellbeing.notes || 'No notes available.'}"</p>
                   <p className="text-xs text-slate-400 mt-2 text-right">Updated: {new Date(currentStudent.wellbeing.lastUpdated).toLocaleDateString()}</p>
                 </div>

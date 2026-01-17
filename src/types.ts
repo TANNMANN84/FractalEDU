@@ -60,6 +60,8 @@ export interface StudentProfile {
     strengths?: string[];
     sentralId?: string;
     attendanceRate?: number;
+    attendanceData?: Record<number, { term1?: number; term2?: number; term3?: number; term4?: number }>;
+    attendanceNotes?: string;
     gender?: string;
     dob?: string;
     isAtsi?: boolean;
@@ -363,6 +365,12 @@ export interface Teacher {
     faculty?: string;
     schoolName?: string;
     signature?: string; // Base64 signature image
+    weatherConfig?: {
+        enabled: boolean;
+        locationName: string;
+        latitude: number;
+        longitude: number;
+    };
 }
 
 export interface BackupFile { dataType: 'fullBackup'; appData: any; files: { [id: string]: string }; }
@@ -411,9 +419,37 @@ export interface SchoolStructure {
     days: DaySchedule[];
 }
 
+// Interface for students tagged in a daybook entry
+export interface TaggedStudent {
+    studentId: string;
+    note?: string;
+    differentiation?: {
+        // Differentiation details
+        extension?: string;
+        support?: string;
+        adjustments?: string;
+    };
+    reminder?: {
+        date: string;
+        text: string;
+        completed: boolean;
+    };
+}
+
+export interface GeneralReminder {
+    id: string;
+    text: string;
+    date: string;
+    completed: boolean;
+}
+
 export interface DaybookEntry {
     id: string;
     date: string; // YYYY-MM-DD
     slotId: string;
     content: string;
+    // Optional list of students associated with this lesson
+    taggedStudents?: TaggedStudent[];
+    resources?: FileUpload[];
+    generalReminders?: GeneralReminder[];
 }

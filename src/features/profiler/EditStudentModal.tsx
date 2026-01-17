@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Save } from 'lucide-react';
 import { useAppStore } from '@/store';
-import { Student, Cohort, WellbeingStatus } from '@/types';
+import { Student, Cohort } from '@/types';
 
 interface EditStudentModalProps {
   student: Student;
@@ -15,7 +15,6 @@ export const EditStudentModal: React.FC<EditStudentModalProps> = ({ student, onC
   const [cohort, setCohort] = useState<Cohort>(student.cohort);
   const [isAtsi, setIsAtsi] = useState(student.isAtsi || false);
   const [hasLearningPlan, setHasLearningPlan] = useState(student.hasLearningPlan || false);
-  const [wellbeingStatus, setWellbeingStatus] = useState<WellbeingStatus>(student.wellbeing.status);
   const [wellbeingNotes, setWellbeingNotes] = useState(student.wellbeing.notes);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -28,7 +27,6 @@ export const EditStudentModal: React.FC<EditStudentModalProps> = ({ student, onC
       hasLearningPlan,
       wellbeing: {
         ...student.wellbeing,
-        status: wellbeingStatus,
         notes: wellbeingNotes,
         lastUpdated: new Date().toISOString(),
       }
@@ -60,7 +58,7 @@ export const EditStudentModal: React.FC<EditStudentModalProps> = ({ student, onC
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Cohort</label>
               <select
@@ -71,18 +69,6 @@ export const EditStudentModal: React.FC<EditStudentModalProps> = ({ student, onC
                 {Object.values(Cohort).map((c) => (
                   <option key={c as string} value={c}>{c}</option>
                 ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Wellbeing Status</label>
-              <select
-                value={wellbeingStatus}
-                onChange={(e) => setWellbeingStatus(e.target.value as WellbeingStatus)}
-                className="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-brand-500 outline-none"
-              >
-                <option value={WellbeingStatus.GREEN}>Green (Stable)</option>
-                <option value={WellbeingStatus.AMBER}>Amber (Monitor)</option>
-                <option value={WellbeingStatus.RED}>Red (Critical)</option>
               </select>
             </div>
           </div>

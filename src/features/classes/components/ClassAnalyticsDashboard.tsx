@@ -27,8 +27,8 @@ const PieWidget = React.memo(({ title, data, color }: { title: string, data: any
     const total = data.reduce((acc, curr) => acc + curr.value, 0);
     const pct = total > 0 ? Math.round((data[0].value / total) * 100) : 0;
     return (
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center">
-            <h4 className="text-xs font-bold text-slate-500 uppercase mb-4 text-center w-full">{title}</h4>
+        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col items-center">
+            <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-4 text-center w-full">{title}</h4>
             <div className="w-24 h-24 relative">
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
@@ -42,15 +42,15 @@ const PieWidget = React.memo(({ title, data, color }: { title: string, data: any
                             stroke="none"
                         >
                             <Cell fill={color} />
-                            <Cell fill="#e2e8f0" />
+                            <Cell fill="#e2e8f0" className="dark:fill-slate-700" />
                         </Pie>
                     </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <span className="text-xl font-bold text-slate-700">{data[0].value}</span>
+                    <span className="text-xl font-bold text-slate-700 dark:text-slate-200">{data[0].value}</span>
                 </div>
             </div>
-            <div className="mt-4 w-full flex justify-between text-[10px] text-slate-500">
+            <div className="mt-4 w-full flex justify-between text-[10px] text-slate-500 dark:text-slate-400">
                 <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full" style={{background: color}}></div> {pct}%</span>
                 <span>{data[1].value} No</span>
             </div>
@@ -127,8 +127,8 @@ export const ClassAnalyticsDashboard: React.FC<Props> = React.memo(({ students, 
             
             {/* Left Col: Memos & Quick Actions */}
             <div className="lg:col-span-1 space-y-6">
-                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col h-[400px]">
-                    <h3 className="font-bold text-slate-800 mb-3 flex items-center gap-2">
+                <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col h-[400px]">
+                    <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-3 flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-brand-500" /> Class Memos
                     </h3>
                     
@@ -136,7 +136,7 @@ export const ClassAnalyticsDashboard: React.FC<Props> = React.memo(({ students, 
                         <input 
                             value={memoText} 
                             onChange={e => setMemoText(e.target.value)}
-                            className="flex-1 text-sm border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-brand-500"
+                            className="flex-1 text-sm border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-brand-500"
                             placeholder="Add reminder..."
                             onKeyDown={e => e.key === 'Enter' && handleAddMemo()}
                         />
@@ -150,9 +150,9 @@ export const ClassAnalyticsDashboard: React.FC<Props> = React.memo(({ students, 
 
                     <div className="flex-1 overflow-y-auto space-y-2 pr-1">
                         {(classGroup.memos || []).slice().reverse().map(memo => (
-                            <div key={memo.id} className="text-xs bg-slate-50 p-3 rounded-lg border border-slate-100 group relative hover:border-slate-200 transition-colors">
-                                <p className="text-slate-700 pr-4 leading-relaxed break-words">{memo.content}</p>
-                                <span className="text-[10px] text-slate-400 mt-2 block border-t border-slate-200 pt-1">
+                            <div key={memo.id} className="text-xs bg-slate-50 dark:bg-slate-800 p-3 rounded-lg border border-slate-100 dark:border-slate-700 group relative hover:border-slate-200 dark:hover:border-slate-600 transition-colors">
+                                <p className="text-slate-700 dark:text-slate-300 pr-4 leading-relaxed break-words">{memo.content}</p>
+                                <span className="text-[10px] text-slate-400 mt-2 block border-t border-slate-200 dark:border-slate-700 pt-1">
                                     {new Date(memo.date).toLocaleDateString()}
                                 </span>
                                 <button 
@@ -176,16 +176,16 @@ export const ClassAnalyticsDashboard: React.FC<Props> = React.memo(({ students, 
             <div className="lg:col-span-3 space-y-6">
                 
                 {/* NAPLAN Bar */}
-                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
                     <div className="flex justify-between items-center mb-6">
                         <div>
-                            <h3 className="font-bold text-slate-800 text-lg">NAPLAN Distribution</h3>
+                            <h3 className="font-bold text-slate-800 dark:text-slate-100 text-lg">NAPLAN Distribution</h3>
                         </div>
                         <div className="flex gap-2">
                             <select 
                                 value={naplanYear} 
                                 onChange={(e) => setNaplanYear(e.target.value as any)}
-                                className="text-xs font-bold bg-white border border-slate-200 rounded-lg px-3 py-1.5 outline-none focus:border-brand-500"
+                                className="text-xs font-bold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 outline-none focus:border-brand-500"
                             >
                                 <option value="year9">Year 9</option>
                                 <option value="year7">Year 7</option>
@@ -193,7 +193,7 @@ export const ClassAnalyticsDashboard: React.FC<Props> = React.memo(({ students, 
                             <select 
                                 value={naplanDomain} 
                                 onChange={(e) => setNaplanDomain(e.target.value as any)}
-                                className="text-xs font-bold bg-white border border-slate-200 rounded-lg px-3 py-1.5 outline-none focus:border-brand-500"
+                                className="text-xs font-bold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 outline-none focus:border-brand-500"
                             >
                                 <option value="reading">Reading</option>
                                 <option value="writing">Writing</option>
@@ -206,7 +206,7 @@ export const ClassAnalyticsDashboard: React.FC<Props> = React.memo(({ students, 
                     <div className="h-64 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={naplanData} layout="vertical" margin={{ left: 100, right: 30 }} barSize={24}>
-                                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#334155" opacity={0.2} />
                                 <XAxis type="number" hide />
                                 <YAxis 
                                     dataKey="name" 
@@ -216,10 +216,10 @@ export const ClassAnalyticsDashboard: React.FC<Props> = React.memo(({ students, 
                                     interval={0}
                                 />
                                 <Tooltip 
-                                    cursor={{fill: '#f8fafc'}}
-                                    contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                                    cursor={{fill: 'rgba(148, 163, 184, 0.1)'}}
+                                    contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', backgroundColor: '#1e293b', color: '#f8fafc'}}
                                 />
-                                <Bar dataKey="value" radius={[0, 4, 4, 0] as any} background={{ fill: '#f8fafc', radius: [0, 4, 4, 0] as any }}>
+                                <Bar dataKey="value" radius={[0, 4, 4, 0] as any} background={{ fill: 'rgba(148, 163, 184, 0.1)', radius: [0, 4, 4, 0] as any }}>
                                     {naplanData.map((entry, index) => {
                                         let colorKey = entry.name;
                                         return <Cell key={`cell-${index}`} fill={COLORS[colorKey] || '#94a3b8'} />;

@@ -94,7 +94,7 @@ export const StudentList: React.FC<StudentListProps> = ({ onSelectStudent, locke
   return (
     <div className="space-y-4">
       {/* Filters Toolbar */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row gap-4 justify-between bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -103,7 +103,7 @@ export const StudentList: React.FC<StudentListProps> = ({ onSelectStudent, locke
               placeholder="Search students..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
+              className="pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all text-slate-900 dark:text-slate-100 placeholder:text-slate-500"
             />
           </div>
           
@@ -114,7 +114,7 @@ export const StudentList: React.FC<StudentListProps> = ({ onSelectStudent, locke
                 <select 
                 value={filterClassId}
                 onChange={(e) => setFilterClassId(e.target.value)}
-                className="py-2 pl-2 pr-8 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 cursor-pointer"
+                className="py-2 pl-2 pr-8 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 cursor-pointer text-slate-700 dark:text-slate-200"
                 >
                 <option value="all">All Classes</option>
                 {classes.map(c => (
@@ -129,7 +129,7 @@ export const StudentList: React.FC<StudentListProps> = ({ onSelectStudent, locke
             <div className="relative">
                 <button 
                     onClick={() => setIsColumnMenuOpen(!isColumnMenuOpen)}
-                    className={`p-2 rounded-lg border transition-colors ${isColumnMenuOpen ? 'bg-slate-100 border-slate-300 text-slate-700' : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700'}`}
+                    className={`p-2 rounded-lg border transition-colors ${isColumnMenuOpen ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                     title="Customize Columns"
                 >
                     <Settings2 className="w-4 h-4" />
@@ -138,15 +138,15 @@ export const StudentList: React.FC<StudentListProps> = ({ onSelectStudent, locke
                 {isColumnMenuOpen && (
                     <>
                         <div className="fixed inset-0 z-10" onClick={() => setIsColumnMenuOpen(false)} />
-                        <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-xl z-20 overflow-hidden py-1 animate-in fade-in zoom-in duration-200">
+                        <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl z-20 overflow-hidden py-1 animate-in fade-in zoom-in duration-200">
                             <div className="px-3 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Toggle Columns</div>
                             {Object.keys(columns).map(col => (
                                 <button 
                                     key={col}
                                     onClick={() => toggleColumn(col as keyof typeof columns)}
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 flex items-center justify-between group"
+                                    className="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center justify-between group"
                                 >
-                                    <span className="capitalize text-slate-700">{col}</span>
+                                    <span className="capitalize text-slate-700 dark:text-slate-200">{col}</span>
                                     {(columns as any)[col] && <span className="w-2 h-2 rounded-full bg-brand-500" />}
                                 </button>
                             ))}
@@ -154,29 +154,29 @@ export const StudentList: React.FC<StudentListProps> = ({ onSelectStudent, locke
                     </>
                 )}
             </div>
-            <div className="text-sm text-slate-500">
+            <div className="text-sm text-slate-500 dark:text-slate-400">
                 Showing {sortedStudents.length} students
             </div>
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-medium">
+            <thead className="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-medium">
               <tr>
-                <th onClick={() => handleSort('name')} className="px-6 py-4 cursor-pointer group hover:bg-slate-100 transition-colors">
+                <th onClick={() => handleSort('name')} className="px-6 py-4 cursor-pointer group hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors">
                   <div className="flex items-center">Name <SortIcon colKey="name" /></div>
                 </th>
-                {columns.cohort && <th onClick={() => handleSort('cohort')} className="px-6 py-4 cursor-pointer group hover:bg-slate-100 transition-colors">
+                {columns.cohort && <th onClick={() => handleSort('cohort')} className="px-6 py-4 cursor-pointer group hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors">
                   <div className="flex items-center">Cohort <SortIcon colKey="cohort" /></div>
                 </th>}
                 {columns.flags && <th className="px-6 py-4">Flags</th>}
-                {columns.atsi && <th onClick={() => handleSort('isAtsi')} className="px-6 py-4 cursor-pointer group hover:bg-slate-100 transition-colors text-center w-32">
+                {columns.atsi && <th onClick={() => handleSort('isAtsi')} className="px-6 py-4 cursor-pointer group hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors text-center w-32">
                   <div className="flex items-center justify-center">ATSI <SortIcon colKey="isAtsi" /></div>
                 </th>}
-                {columns.plan && <th onClick={() => handleSort('hasLearningPlan')} className="px-6 py-4 cursor-pointer group hover:bg-slate-100 transition-colors text-center w-40">
+                {columns.plan && <th onClick={() => handleSort('hasLearningPlan')} className="px-6 py-4 cursor-pointer group hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors text-center w-40">
                   <div className="flex items-center justify-center">Learning Plan <SortIcon colKey="hasLearningPlan" /></div>
                 </th>}
               </tr>
@@ -187,36 +187,40 @@ export const StudentList: React.FC<StudentListProps> = ({ onSelectStudent, locke
                   <tr 
                     key={student.id} 
                     onClick={() => onSelectStudent(student)}
-                    className="hover:bg-brand-50/50 cursor-pointer transition-colors group"
+                    className="hover:bg-brand-50/50 dark:hover:bg-brand-900/20 cursor-pointer transition-colors group"
                   >
-                    <td className="px-6 py-4 font-medium text-slate-800 group-hover:text-brand-700">{student.name}</td>
-                    {columns.cohort && <td className="px-6 py-4 text-slate-500">{student.cohort}</td>}
+                    <td className="px-6 py-4 font-medium text-slate-800 dark:text-slate-200 group-hover:text-brand-700 dark:group-hover:text-brand-400">{student.name}</td>
+                    {columns.cohort && <td className="px-6 py-4 text-slate-500 dark:text-slate-400">{student.cohort}</td>}
                     {columns.flags && (
                         <td className="px-6 py-4">
                             <div className="flex flex-wrap gap-1">
-                                {student.nccd?.isNCCD && <span className="w-2.5 h-2.5 rounded-full bg-pink-500" title="NCCD" />}
+                                {student.nccd?.isNCCD && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300 border border-pink-200 dark:border-pink-800">NCCD</span>
+                                )}
                                 {student.profile?.customFlags?.map(f => (
-                                    <span key={f.id} className={`w-2.5 h-2.5 rounded-full ${f.color.split(' ')[0].replace('100','500')}`} title={f.label} />
+                                    <span key={f.id} className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${f.color || 'bg-slate-100 text-slate-800 border-slate-200'}`}>
+                                        {f.label}
+                                    </span>
                                 ))}
                             </div>
                         </td>
                     )}
                     {columns.atsi && <td className="px-6 py-4 text-center">
                       {student.isAtsi || student.profile?.isAtsi ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
                           Yes
                         </span>
                       ) : (
-                        <span className="text-slate-300">-</span>
+                        <span className="text-slate-300 dark:text-slate-600">-</span>
                       )}
                     </td>}
                     {columns.plan && <td className="px-6 py-4 text-center">
                       {student.hasLearningPlan || student.plans?.learning?.active ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                           Yes
                         </span>
                       ) : (
-                        <span className="text-slate-300">-</span>
+                        <span className="text-slate-300 dark:text-slate-600">-</span>
                       )}
                     </td>}
                   </tr>

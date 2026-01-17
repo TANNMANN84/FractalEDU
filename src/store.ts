@@ -111,10 +111,10 @@ export const useAppStore = create<AppState>()(
           const idx = state.daybookEntries.findIndex(e => e.date === entry.date && e.slotId === entry.slotId);
           if (idx >= 0) {
               const newEntries = [...state.daybookEntries];
-              newEntries[idx] = { ...newEntries[idx], content: entry.content };
+              newEntries[idx] = { ...newEntries[idx], ...entry };
               return { daybookEntries: newEntries };
           }
-          return { daybookEntries: [...state.daybookEntries, { ...entry, id: crypto.randomUUID() }] };
+          return { daybookEntries: [...state.daybookEntries, { ...entry, id: entry.id || crypto.randomUUID() }] };
       }),
 
       addStudent: (student) => set((state) => ({ students: [...state.students, student] })),

@@ -194,8 +194,8 @@ export const SeatingPlanEditor: React.FC<Props> = ({ classGroup }) => {
 
     return (
         <DndContext sensors={sensors} onDragStart={(e) => setActiveDragId(e.active.id as string)} onDragEnd={handleDragEnd}>
-            <div className="flex flex-col h-full bg-slate-50">
-                <div className="bg-white p-3 border-b border-slate-200 flex flex-wrap justify-between items-center shrink-0 gap-3">
+            <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950">
+                <div className="bg-white dark:bg-slate-900 p-3 border-b border-slate-200 dark:border-slate-800 flex flex-wrap justify-between items-center shrink-0 gap-3">
                     
                     {/* Left: Plan Management */}
                     <div className="flex items-center gap-3">
@@ -203,48 +203,48 @@ export const SeatingPlanEditor: React.FC<Props> = ({ classGroup }) => {
                             <select 
                                 value={activePlanId} 
                                 onChange={(e) => setActivePlanId(e.target.value)} 
-                                className="font-bold text-sm bg-slate-100 border border-slate-200 rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-brand-500"
+                                className="font-bold text-sm bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-brand-500 text-slate-800 dark:text-slate-200"
                             >
                                 {(classGroup.seatingPlans || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                                 {(!classGroup.seatingPlans || classGroup.seatingPlans.length === 0) && <option value="new">Default Plan</option>}
                             </select>
-                            <button onClick={handleRenameTrigger} disabled={activePlanId === 'new'} className="p-1.5 hover:bg-slate-100 rounded text-slate-500 disabled:opacity-50" title="Rename"><Edit2 className="w-4 h-4"/></button>
-                            <button onClick={handleCreateTrigger} className="p-1.5 hover:bg-slate-100 rounded text-slate-500" title="New Plan"><Plus className="w-4 h-4"/></button>
-                            <button onClick={handleDeleteTrigger} disabled={activePlanId === 'new'} className="p-1.5 hover:bg-red-50 rounded text-slate-400 hover:text-red-500 disabled:opacity-50" title="Delete Plan"><Trash2 className="w-4 h-4"/></button>
+                            <button onClick={handleRenameTrigger} disabled={activePlanId === 'new'} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-500 dark:text-slate-400 disabled:opacity-50" title="Rename"><Edit2 className="w-4 h-4"/></button>
+                            <button onClick={handleCreateTrigger} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-500 dark:text-slate-400" title="New Plan"><Plus className="w-4 h-4"/></button>
+                            <button onClick={handleDeleteTrigger} disabled={activePlanId === 'new'} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-slate-400 hover:text-red-500 disabled:opacity-50" title="Delete Plan"><Trash2 className="w-4 h-4"/></button>
                         </div>
 
-                        <div className="h-6 w-px bg-slate-200 mx-1"></div>
+                        <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
 
                         <div className="flex items-center gap-2">
                             <GridIcon className="w-4 h-4 text-slate-400" />
-                            <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
-                                <input type="number" value={rows} onChange={e => setRows(Number(e.target.value))} className="w-8 bg-transparent text-center font-bold outline-none text-sm" />
+                            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+                                <input type="number" value={rows} onChange={e => setRows(Number(e.target.value))} className="w-8 bg-transparent text-center font-bold outline-none text-sm text-slate-700 dark:text-slate-200" />
                                 <span className="text-slate-300 text-xs">x</span>
-                                <input type="number" value={cols} onChange={e => setCols(Number(e.target.value))} className="w-8 bg-transparent text-center font-bold outline-none text-sm" />
+                                <input type="number" value={cols} onChange={e => setCols(Number(e.target.value))} className="w-8 bg-transparent text-center font-bold outline-none text-sm text-slate-700 dark:text-slate-200" />
                             </div>
                         </div>
                     </div>
 
                     {/* Right: Visuals & Actions */}
                     <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-lg border border-slate-100">
+                        <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 p-1 rounded-lg border border-slate-100 dark:border-slate-700">
                             <button 
                                 onClick={() => setShowGenderColor(!showGenderColor)}
-                                className={`p-1.5 rounded ${showGenderColor ? 'bg-white shadow text-brand-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                className={`p-1.5 rounded ${showGenderColor ? 'bg-white dark:bg-slate-700 shadow text-brand-600 dark:text-brand-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
                                 title="Toggle Gender Colors"
                             >
                                 <Palette className="w-4 h-4"/> 
                             </button>
                             <button 
                                 onClick={() => setFrontOfRoom(p => p === 'top' ? 'bottom' : 'top')} 
-                                className={`p-1.5 rounded flex items-center gap-1 text-xs font-bold ${frontOfRoom === 'top' ? 'bg-white shadow text-brand-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                className={`p-1.5 rounded flex items-center gap-1 text-xs font-bold ${frontOfRoom === 'top' ? 'bg-white dark:bg-slate-700 shadow text-brand-600 dark:text-brand-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
                                 title="Toggle Front of Room"
                             >
                                 <Monitor className="w-4 h-4"/> {frontOfRoom==='top'?'Top':'Bot'}
                             </button>
                             <button 
                                 onClick={handleRandomTrigger} 
-                                className="p-1.5 rounded text-slate-400 hover:text-indigo-600 hover:bg-white transition-all"
+                                className="p-1.5 rounded text-slate-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-slate-700 transition-all"
                                 title="Randomly Assign"
                             >
                                 <Shuffle className="w-4 h-4"/>
@@ -252,7 +252,7 @@ export const SeatingPlanEditor: React.FC<Props> = ({ classGroup }) => {
                         </div>
 
                         <div className="flex gap-2">
-                            <button onClick={handleSave} className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 text-sm font-medium transition-colors">
+                            <button onClick={handleSave} className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 text-sm font-medium transition-colors text-slate-700 dark:text-slate-200">
                                 <Save className="w-4 h-4"/> Save
                             </button>
                             <button onClick={handlePublishTrigger} className="flex items-center gap-2 px-3 py-1.5 bg-brand-600 text-white rounded-lg hover:bg-brand-700 text-sm font-bold shadow-sm transition-colors">
@@ -266,10 +266,10 @@ export const SeatingPlanEditor: React.FC<Props> = ({ classGroup }) => {
                 <div className="flex-1 flex overflow-hidden">
                     <UnseatedSidebar students={unseatedStudents} showGender={showGenderColor} />
                     
-                    <div className="flex-1 overflow-auto bg-slate-100/50 p-8 flex flex-col items-center">
-                        <div ref={captureRef} className="flex flex-col items-center bg-slate-50 p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <div className="flex-1 overflow-auto bg-slate-100/50 dark:bg-slate-900/50 p-8 flex flex-col items-center">
+                        <div ref={captureRef} className="flex flex-col items-center bg-slate-50 dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
                             {frontOfRoom === 'top' && (
-                                <div className="w-2/3 h-3 bg-slate-300 rounded-b-xl mb-8 shrink-0 relative shadow-inner">
+                                <div className="w-2/3 h-3 bg-slate-300 dark:bg-slate-600 rounded-b-xl mb-8 shrink-0 relative shadow-inner">
                                     <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Front of Room (Board)</span>
                                 </div>
                             )}
@@ -283,7 +283,7 @@ export const SeatingPlanEditor: React.FC<Props> = ({ classGroup }) => {
                             </div>
                             
                             {frontOfRoom === 'bottom' && (
-                                <div className="w-2/3 h-3 bg-slate-300 rounded-t-xl mt-8 shrink-0 relative shadow-inner">
+                                <div className="w-2/3 h-3 bg-slate-300 dark:bg-slate-600 rounded-t-xl mt-8 shrink-0 relative shadow-inner">
                                     <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Front of Room (Board)</span>
                                 </div>
                             )}
@@ -355,12 +355,12 @@ const UnseatedSidebar: React.FC<{ students: Student[], showGender?: boolean }> =
     return (
         <div 
             ref={setNodeRef}
-            className={`w-56 bg-white border-r border-slate-200 flex flex-col transition-colors ${isOver ? 'bg-slate-50' : ''} shrink-0`}
+            className={`w-56 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-colors ${isOver ? 'bg-slate-50 dark:bg-slate-800' : ''} shrink-0`}
         >
-            <div className="p-4 border-b border-slate-100 bg-white">
-                <h4 className="font-bold text-slate-700 text-sm flex items-center justify-between">
+            <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+                <h4 className="font-bold text-slate-700 dark:text-slate-200 text-sm flex items-center justify-between">
                     Unseated 
-                    <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-xs">{students.length}</span>
+                    <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full text-xs">{students.length}</span>
                 </h4>
             </div>
             <div className="flex-1 overflow-y-auto p-3 space-y-2">

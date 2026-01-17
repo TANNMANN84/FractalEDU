@@ -3,7 +3,7 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { useAppStore } from '@/store';
 import { useTheme } from '@/context/ThemeContext';
-import { Sun, Moon, CloudOff, Save, CheckCircle, CloudSun, MapPin, Wind, Droplets, Calendar } from 'lucide-react';
+import { Sun, Moon, CloudOff, Save, CheckCircle, CloudSun, MapPin, Wind, Droplets, Calendar, Settings } from 'lucide-react';
 import { useAutoSync } from '@/hooks/useAutoSync';
 
 export const RootLayout: React.FC = () => {
@@ -30,22 +30,18 @@ export const RootLayout: React.FC = () => {
   useEffect(() => {
     const fetchWeather = async () => {
       try {
-        // Default to Inverell (User Request)
-        let lat = -29.7725;
-        let lon = 151.1139;
-        let name = 'Inverell';
-
-        const saved = localStorage.getItem('fractal_weather_loc');
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved);
-                if (parsed.lat && parsed.lon) {
-                    lat = parsed.lat;
-                    lon = parsed.lon;
-                    name = parsed.name;
-                }
-            } catch (e) { /* ignore */ }
+        // Use profile config or default to Inverell
+        const config = teacherProfile?.weatherConfig;
+        
+        // If explicitly disabled, don't fetch
+        if (config && !config.enabled) {
+            setWeather(null);
+            return;
         }
+
+        const lat = config?.latitude || -29.7725;
+        const lon = config?.longitude || 151.1139;
+        const name = config?.locationName || 'Inverell';
 
         const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,apparent_temperature,relative_humidity_2m,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto`);
         const data = await res.json();
@@ -56,7 +52,9 @@ export const RootLayout: React.FC = () => {
                 if (code >= 1 && code <= 3) return 'Cloudy';
                 if (code >= 45 && code <= 48) return 'Fog';
                 if (code >= 51 && code <= 67) return 'Rain';
-                if (code >= 71) return 'Snow';
+                if (code >= 71 && code <= 77) return 'Snow';
+                if (code >= 80 && code <= 82) return 'Rain';
+                if (code >= 85 && code <= 86) return 'Snow';
                 if (code >= 95) return 'Storm';
                 return 'Overcast';
             };
@@ -84,7 +82,7 @@ export const RootLayout: React.FC = () => {
     fetchWeather();
     const interval = setInterval(fetchWeather, 600000); // 10 mins
     return () => clearInterval(interval);
-  }, []);
+  }, [teacherProfile?.weatherConfig]);
 
   const displayName = teacherProfile?.name || 'John Doe';
   const displayRole = teacherProfile?.role || 'Head of Science';
@@ -103,7 +101,7 @@ export const RootLayout: React.FC = () => {
             {weather ? (
                 <div className="relative group z-20">
                     {/* Main Banner */}
-                    <div className="flex items-center gap-5 px-5 py-2.5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-brand-300 dark:hover:border-brand-700 transition-all cursor-default shadow-sm">
+                    <div className="flex items-center gap-5 px-5 py-2.5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-brand-300 dark:hover:border-brand-700 transition-all cursor-pointer shadow-sm" onClick={() => navigate('/management', { state: { tab: 'Profile' } })}>
                         
                         {/* Icon & Location */}
                         <div className="flex items-center gap-3">
@@ -162,11 +160,14 @@ export const RootLayout: React.FC = () => {
                                 </span>
                             </div>
                         </div>
+                        <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-700 text-center">
+                            <button onClick={() => navigate('/management', { state: { tab: 'Profile' } })} className="text-xs text-brand-600 hover:text-brand-700 font-medium flex items-center justify-center gap-1 w-full"><Settings className="w-3 h-3"/> Change Location</button>
+                        </div>
                     </div>
                 </div>
-            ) : (
+            ) : teacherProfile?.weatherConfig?.enabled !== false ? (
                 <div className="h-14 w-64 bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse"></div>
-            )}
+            ) : null}
           </div>
 
           {/* CENTER: Spacer (Pushes search to right) */}

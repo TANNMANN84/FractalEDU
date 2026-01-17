@@ -25,18 +25,18 @@ export const DraggableStudent: React.FC<DraggableStudentProps> = ({ student, id,
   const baseClasses = "p-1 rounded-lg border shadow-sm text-xs font-bold cursor-grab active:cursor-grabbing select-none transition-all w-full flex flex-col items-center justify-center text-center h-full overflow-hidden";
   
   // Logic for Background Color
-  let bgClass = "bg-white hover:border-brand-300";
+  let bgClass = "bg-white dark:bg-slate-800 hover:border-brand-300 dark:hover:border-brand-500 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700";
   
   if (showGender && student.profile?.gender) {
       const g = student.profile.gender.toLowerCase();
-      if (g === 'male') bgClass = "bg-blue-50 border-blue-200 text-blue-900";
-      else if (g === 'female') bgClass = "bg-pink-50 border-pink-200 text-pink-900";
-      else bgClass = "bg-emerald-50 border-emerald-200 text-emerald-900";
+      if (g === 'male') bgClass = "bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-100";
+      else if (g === 'female') bgClass = "bg-pink-50 dark:bg-pink-900/30 border-pink-200 dark:border-pink-800 text-pink-900 dark:text-pink-100";
+      else bgClass = "bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-100";
   } else {
       // Default Risk/Status coloring if Gender is off
-      if (student.wellbeing.status === 'red') bgClass = "bg-red-50 border-red-200 text-red-900";
-      else if (student.support.level !== 'none') bgClass = "bg-amber-50 border-amber-200 text-amber-900";
-      else if (student.isAtsi) bgClass = "bg-indigo-50 border-indigo-200 text-indigo-900";
+      if (student.wellbeing.status === 'red') bgClass = "bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800 text-red-900 dark:text-red-100";
+      else if (student.support.level !== 'none') bgClass = "bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-100";
+      else if (student.isAtsi) bgClass = "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800 text-indigo-900 dark:text-indigo-100";
   }
 
   if (isOverlay) {
@@ -44,7 +44,7 @@ export const DraggableStudent: React.FC<DraggableStudentProps> = ({ student, id,
   }
   
   if (isDragging && !isOverlay) {
-      return <div ref={setNodeRef} className="opacity-30 w-full h-full bg-slate-100 rounded-lg border-2 border-dashed border-slate-300" />;
+      return <div ref={setNodeRef} className="opacity-30 w-full h-full bg-slate-100 dark:bg-slate-700 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-600" />;
   }
 
   return (
@@ -84,7 +84,7 @@ export const DeskCell: React.FC<DeskCellProps> = ({ row, col, student, showGende
       ref={setNodeRef}
       className={`
         w-28 h-20 rounded-xl border-2 transition-all flex items-center justify-center p-1
-        ${isOver ? 'border-brand-500 bg-brand-50 ring-2 ring-brand-200' : 'border-slate-200 bg-white'}
+        ${isOver ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20 ring-2 ring-brand-200 dark:ring-brand-800' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800'}
         ${!student && !isOver ? 'border-dashed' : 'border-solid shadow-sm'}
       `}
     >
@@ -95,7 +95,7 @@ export const DeskCell: React.FC<DeskCellProps> = ({ row, col, student, showGende
           showGender={showGender}
         />
       ) : (
-        <span className="text-slate-300 text-[10px] font-medium pointer-events-none uppercase tracking-wide">Empty</span>
+        <span className="text-slate-300 dark:text-slate-600 text-[10px] font-medium pointer-events-none uppercase tracking-wide">Empty</span>
       )}
     </div>
   );

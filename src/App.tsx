@@ -10,7 +10,6 @@ import { MonitoringDashboard } from './features/monitoring/MonitoringDashboard';
 import { ToastContainer } from './shared/components/ToastContainer';
 import { ThemeProvider } from './context/ThemeContext';
 import { useAutoSync } from '@/hooks/useAutoSync';
-import { LandingPage } from './LandingPage';
 import { Day2Day } from './features/day2day/Day2Day';
 
 // Lazy load the named export 'Reporting' to isolate PDF libraries
@@ -73,7 +72,7 @@ const FractalApp: React.FC = () => {
     <Routes>
       <Route path="/" element={<RootLayout />}>
         {/* Default Redirect */}
-        <Route index element={<LandingPage />} />
+        <Route index element={<Day2Day />} />
 
         {/* CRITICAL FIX: Added "/*" to these paths.
             This tells the Router: "Allow sub-paths like /classes/seating to pass through 

@@ -101,9 +101,9 @@ export const AcademicDataModal: React.FC<Props> = ({ student, onClose }) => {
 
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-200">
-                <div className="p-4 border-b flex justify-between items-center bg-slate-50">
-                    <h3 className="font-bold text-lg text-slate-800">Edit Academic History</h3>
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-200">
+                <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950">
+                    <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">Edit Academic History</h3>
                     <button onClick={onClose}><X className="w-5 h-5 text-slate-500" /></button>
                 </div>
                 
@@ -111,14 +111,14 @@ export const AcademicDataModal: React.FC<Props> = ({ student, onClose }) => {
                     
                     {/* SECTION 1: VALID Science */}
                     <div>
-                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-3 border-b border-slate-100 pb-1">VALID Science 8</h4>
-                        <div className="grid grid-cols-2 gap-6 bg-slate-50 p-4 rounded-lg border border-slate-200">
+                        <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-3 border-b border-slate-100 dark:border-slate-800 pb-1">VALID Science 8</h4>
+                        <div className="grid grid-cols-2 gap-6 bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
                             <div>
-                                <label className="block text-xs font-bold text-slate-600 mb-1">Overall Level (1-6)</label>
+                                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Overall Level (1-6)</label>
                                 <select 
                                     value={valid.level} 
                                     onChange={e => setValid({...valid, level: parseInt(e.target.value) as any})}
-                                    className="w-full p-2 border border-slate-300 rounded text-sm focus:border-brand-500 outline-none"
+                                    className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:border-brand-500 outline-none"
                                 >
                                     {[1,2,3,4,5,6].map(l => <option key={l} value={l}>Level {l}</option>)}
                                 </select>
@@ -126,9 +126,9 @@ export const AcademicDataModal: React.FC<Props> = ({ student, onClose }) => {
                             <div className="space-y-3">
                                 {['knowing', 'planning', 'problemSolving'].map(strand => (
                                     <div key={strand} className="flex items-center justify-between">
-                                        <span className="text-sm text-slate-600 capitalize font-medium">{strand.replace(/([A-Z])/g, ' $1').trim()}</span>
+                                        <span className="text-sm text-slate-600 dark:text-slate-300 capitalize font-medium">{strand.replace(/([A-Z])/g, ' $1').trim()}</span>
                                         <select 
-                                            className="border border-slate-300 rounded text-xs p-1.5 w-24 focus:border-brand-500 outline-none"
+                                            className="border border-slate-300 dark:border-slate-600 rounded text-xs p-1.5 w-24 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:border-brand-500 outline-none"
                                             value={(valid.strands as any)[strand]}
                                             onChange={e => setValid({
                                                 ...valid, 
@@ -147,17 +147,17 @@ export const AcademicDataModal: React.FC<Props> = ({ student, onClose }) => {
 
                     {/* SECTION 2: Check-in Assessments */}
                     <div>
-                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-3 border-b border-slate-100 pb-1">Check-in Assessments (%)</h4>
+                        <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-3 border-b border-slate-100 dark:border-slate-800 pb-1">Check-in Assessments (%)</h4>
                         <div className="grid grid-cols-3 gap-4">
                             {[7, 8, 9].map(year => (
-                                <div key={year} className="p-3 border border-slate-200 rounded-lg bg-white">
-                                    <div className="text-center font-bold text-slate-700 text-sm mb-2">Year {year}</div>
+                                <div key={year} className="p-3 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800">
+                                    <div className="text-center font-bold text-slate-700 dark:text-slate-200 text-sm mb-2">Year {year}</div>
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between">
                                             <span className="text-xs text-slate-500">Read</span>
                                             <input 
                                                 type="number" 
-                                                className="w-14 p-1 border rounded text-center text-sm"
+                                                className="w-14 p-1 border border-slate-300 dark:border-slate-600 rounded text-center text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
                                                 placeholder="%"
                                                 value={checkInState[year]?.reading || ''}
                                                 onChange={e => handleCheckInChange(year, 'reading', e.target.value)}
@@ -167,7 +167,7 @@ export const AcademicDataModal: React.FC<Props> = ({ student, onClose }) => {
                                             <span className="text-xs text-slate-500">Num</span>
                                             <input 
                                                 type="number" 
-                                                className="w-14 p-1 border rounded text-center text-sm"
+                                                className="w-14 p-1 border border-slate-300 dark:border-slate-600 rounded text-center text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
                                                 placeholder="%"
                                                 value={checkInState[year]?.numeracy || ''}
                                                 onChange={e => handleCheckInChange(year, 'numeracy', e.target.value)}
@@ -181,8 +181,8 @@ export const AcademicDataModal: React.FC<Props> = ({ student, onClose }) => {
 
                     {/* SECTION 3: Semester Reports */}
                     <div>
-                        <div className="flex justify-between items-center mb-3 border-b border-slate-100 pb-1">
-                            <h4 className="text-xs font-bold text-slate-500 uppercase">Semester Reports</h4>
+                        <div className="flex justify-between items-center mb-3 border-b border-slate-100 dark:border-slate-800 pb-1">
+                            <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Semester Reports</h4>
                             <button onClick={addReport} className="text-xs flex items-center gap-1 text-brand-600 font-bold hover:bg-brand-50 px-2 py-1 rounded transition-colors">
                                 <Plus className="w-3 h-3"/> Add Year
                             </button>
@@ -192,36 +192,33 @@ export const AcademicDataModal: React.FC<Props> = ({ student, onClose }) => {
                             {reports.length === 0 && <p className="text-sm text-slate-400 italic">No reports added.</p>}
                             
                             {reports.map((r, idx) => (
-                                <div key={idx} className="flex flex-wrap gap-2 items-center bg-slate-50 p-2 rounded-lg border border-slate-200">
+                                <div key={idx} className="flex flex-wrap gap-2 items-center bg-slate-50 dark:bg-slate-800 p-2 rounded-lg border border-slate-200 dark:border-slate-700">
                                     <select 
                                         value={r.year} 
                                         onChange={e => updateReport(idx, 'year', parseInt(e.target.value))} 
-                                        className="w-20 p-1.5 text-sm border border-slate-300 rounded bg-white"
+                                        className="w-20 p-1.5 text-sm border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
                                     >
                                         {[2020, 2021, 2022, 2023, 2024, 2025].map(y => <option key={y} value={y}>{y}</option>)}
                                     </select>
                                     
-                                    <div className="flex items-center bg-white border border-slate-300 rounded px-2">
-                                        <span className="text-xs font-bold text-slate-400 mr-2">Yr</span>
+                                    <div className="flex items-center bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-2">
+                                        <span className="text-xs font-bold text-slate-400 mr-2 whitespace-nowrap">Yr</span>
                                         <input 
                                             type="number" 
-                                            value={r.grade === 'N/A' || !r.grade ? 7 : r.grade /* hacky reuse of grade field for year level if needed, but keeping separate */}
-                                            className="w-8 p-1 text-sm outline-none font-bold"
+                                            value={r.grade === 'N/A' || !r.grade || isNaN(Number(r.grade)) ? '' : r.grade}
+                                            className="w-16 p-1 text-sm outline-none font-bold bg-transparent text-slate-900 dark:text-slate-100"
                                             placeholder="7"
-                                            onChange={(e) => {
-                                                // Actually we probably want Year Group here (7-12) separate from Calendar Year
-                                                // For now assuming 'year' is Calendar Year.
-                                            }}
+                                            onChange={(e) => updateReport(idx, 'grade', e.target.value)}
                                         />
                                     </div>
 
-                                    <div className="h-6 w-px bg-slate-300 mx-1"></div>
+                                    <div className="h-6 w-px bg-slate-300 dark:bg-slate-600 mx-1"></div>
 
                                     {['English', 'Mathematics', 'Science'].map(subj => (
                                         <div key={subj} className="flex items-center gap-1">
                                             <span className="text-[10px] font-bold text-slate-500 uppercase w-8 text-right">{subj.substring(0,3)}</span>
                                             <select 
-                                                className="p-1 border border-slate-300 rounded w-12 text-sm bg-white" 
+                                                className="p-1 border border-slate-300 dark:border-slate-600 rounded w-12 text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" 
                                                 value={getSubjectGrade(r, subj)}
                                                 onChange={e => updateReportSubject(idx, subj, e.target.value)}
                                             >
@@ -232,7 +229,7 @@ export const AcademicDataModal: React.FC<Props> = ({ student, onClose }) => {
 
                                     <button 
                                         onClick={() => setReports(reports.filter((_, i) => i !== idx))} 
-                                        className="ml-auto p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded"
+                                        className="ml-auto p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
                                     >
                                         <Trash2 className="w-4 h-4"/>
                                     </button>
@@ -243,8 +240,8 @@ export const AcademicDataModal: React.FC<Props> = ({ student, onClose }) => {
 
                 </div>
                 
-                <div className="p-4 border-t bg-slate-50 flex justify-end gap-3 rounded-b-xl">
-                    <button onClick={onClose} className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-200 rounded-lg text-sm">Cancel</button>
+                <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex justify-end gap-3 rounded-b-xl">
+                    <button onClick={onClose} className="px-4 py-2 text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg text-sm">Cancel</button>
                     <button onClick={handleSave} className="px-6 py-2 bg-brand-600 text-white rounded-lg font-bold hover:bg-brand-700 flex items-center gap-2 shadow-sm text-sm">
                         <Save className="w-4 h-4" /> Save Data
                     </button>

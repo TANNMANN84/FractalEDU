@@ -103,17 +103,17 @@ export const NeedsAdjustments: React.FC<Props> = ({ student, onAddEvidence }) =>
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
             
             {/* 1. Student Flags (Replaces Consultation) */}
-            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                <h3 className="font-bold text-slate-800 text-lg mb-4 flex items-center gap-2">
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                <h3 className="font-bold text-slate-800 dark:text-slate-100 text-lg mb-4 flex items-center gap-2">
                     <Flag className="w-5 h-5 text-indigo-500" /> Student Flags
                 </h3>
                 <div className="flex flex-wrap gap-3">
                     {/* Standard Flags */}
                     {[
-                        { id: 'lit', label: 'Literacy Support', color: 'bg-blue-100 text-blue-800 border-blue-200' },
-                        { id: 'num', label: 'Numeracy Support', color: 'bg-green-100 text-green-800 border-green-200' },
-                        { id: 'hpge', label: 'HPGE', color: 'bg-amber-100 text-amber-800 border-amber-200' },
-                        { id: 'learning_centre', label: 'Learning Centre Booking', color: 'bg-purple-100 text-purple-800 border-purple-200' },
+                        { id: 'lit', label: 'Literacy Support', color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800' },
+                        { id: 'num', label: 'Numeracy Support', color: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800' },
+                        { id: 'hpge', label: 'HPGE', color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800' },
+                        { id: 'learning_centre', label: 'Learning Centre Booking', color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 border-purple-200 dark:border-purple-800' },
                     ].map(flag => {
                         const isActive = hasFlag(flag.id);
                         return (
@@ -123,7 +123,7 @@ export const NeedsAdjustments: React.FC<Props> = ({ student, onAddEvidence }) =>
                                 className={`px-4 py-2 rounded-full text-sm font-bold border transition-all flex items-center gap-2 ${
                                     isActive 
                                     ? flag.color 
-                                    : 'bg-slate-50 text-slate-500 border-slate-200 opacity-60 hover:opacity-100'
+                                    : 'bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 opacity-60 hover:opacity-100'
                                 }`}
                             >
                                 {isActive && <Check className="w-3 h-3" />} {flag.label}
@@ -142,12 +142,12 @@ export const NeedsAdjustments: React.FC<Props> = ({ student, onAddEvidence }) =>
                     {!isCreatingFlag ? (
                         <button 
                             onClick={() => setIsCreatingFlag(true)} 
-                            className="px-3 py-2 rounded-full border border-dashed border-slate-300 text-slate-400 hover:text-brand-600 hover:border-brand-300 text-xs font-bold flex items-center gap-1 transition-colors"
+                            className="px-3 py-2 rounded-full border border-dashed border-slate-300 dark:border-slate-600 text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 hover:border-brand-300 dark:hover:border-brand-500 text-xs font-bold flex items-center gap-1 transition-colors"
                         >
                             <Plus className="w-3 h-3" /> Custom
                         </button>
                     ) : (
-                        <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-full border border-slate-300">
+                        <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 p-1 rounded-full border border-slate-300 dark:border-slate-600">
                             <input 
                                 autoFocus 
                                 className="bg-transparent text-xs font-bold outline-none pl-2 w-24" 
@@ -169,19 +169,19 @@ export const NeedsAdjustments: React.FC<Props> = ({ student, onAddEvidence }) =>
             </div>
 
             {/* 2. NCCD Classification */}
-            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm transition-all">
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all">
                 <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-pink-50 text-pink-600 rounded-lg">
+                        <div className="p-2 bg-pink-50 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 rounded-lg">
                             <Activity className="w-5 h-5" />
                         </div>
                         <div>
-                            <h3 className="font-bold text-slate-800 text-lg">NCCD Classification</h3>
+                            <h3 className="font-bold text-slate-800 dark:text-slate-100 text-lg">NCCD Classification</h3>
                             <p className="text-xs text-slate-500">National Consistent Collection of Data</p>
                         </div>
                     </div>
                     
-                    <label className={`flex items-center gap-2 cursor-pointer px-4 py-2 rounded-lg border transition-colors ${nccd.isNCCD ? 'bg-pink-50 border-pink-200 text-pink-900' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
+                    <label className={`flex items-center gap-2 cursor-pointer px-4 py-2 rounded-lg border transition-colors ${nccd.isNCCD ? 'bg-pink-50 dark:bg-pink-900/20 border-pink-200 dark:border-pink-800 text-pink-900 dark:text-pink-200' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'}`}>
                         <input 
                             type="checkbox" 
                             checked={nccd.isNCCD} 
@@ -199,7 +199,7 @@ export const NeedsAdjustments: React.FC<Props> = ({ student, onAddEvidence }) =>
                             <label className="block text-xs font-bold text-slate-500 uppercase mb-3 tracking-wide">Level of Adjustment</label>
                             <div className="space-y-2">
                                 {['QDTP', 'Supplementary', 'Substantial', 'Extensive'].map((lvl) => (
-                                    <label key={lvl} className={`flex items-center p-3 rounded-lg border cursor-pointer transition-all ${nccd.level === lvl ? 'bg-pink-50 border-pink-500 shadow-sm ring-1 ring-pink-500' : 'bg-white border-slate-200 hover:border-slate-300'}`}>
+                                    <label key={lvl} className={`flex items-center p-3 rounded-lg border cursor-pointer transition-all ${nccd.level === lvl ? 'bg-pink-50 dark:bg-pink-900/20 border-pink-500 shadow-sm ring-1 ring-pink-500' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'}`}>
                                         <input 
                                             type="radio" 
                                             name="nccdLevel" 
@@ -207,10 +207,10 @@ export const NeedsAdjustments: React.FC<Props> = ({ student, onAddEvidence }) =>
                                             onChange={() => handleNccdUpdate({ level: lvl as any })}
                                             className="hidden"
                                         />
-                                        <div className={`w-4 h-4 rounded-full border mr-3 flex items-center justify-center ${nccd.level === lvl ? 'border-pink-600' : 'border-slate-300'}`}>
+                                        <div className={`w-4 h-4 rounded-full border mr-3 flex items-center justify-center ${nccd.level === lvl ? 'border-pink-600' : 'border-slate-300 dark:border-slate-600'}`}>
                                             {nccd.level === lvl && <div className="w-2 h-2 rounded-full bg-pink-600" />}
                                         </div>
-                                        <span className={`text-sm font-medium ${nccd.level === lvl ? 'text-pink-900' : 'text-slate-700'}`}>{lvl}</span>
+                                        <span className={`text-sm font-medium ${nccd.level === lvl ? 'text-pink-900 dark:text-pink-200' : 'text-slate-700 dark:text-slate-200'}`}>{lvl}</span>
                                     </label>
                                 ))}
                             </div>
@@ -236,8 +236,8 @@ export const NeedsAdjustments: React.FC<Props> = ({ student, onAddEvidence }) =>
                                             onClick={() => toggleCategory(cat.id as any)}
                                             className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${
                                                 isSelected 
-                                                    ? 'bg-indigo-50 border-indigo-500 text-indigo-700 shadow-sm ring-1 ring-indigo-500' 
-                                                    : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
+                                                    ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-500 text-indigo-700 dark:text-indigo-300 shadow-sm ring-1 ring-indigo-500' 
+                                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
                                             }`}
                                         >
                                             <cat.icon className={`w-5 h-5 mb-1 ${isSelected ? 'text-indigo-600' : 'text-slate-400'}`} />
@@ -251,7 +251,7 @@ export const NeedsAdjustments: React.FC<Props> = ({ student, onAddEvidence }) =>
                             <textarea 
                                 value={nccd.impactStatement || ''}
                                 onChange={(e) => handleNccdUpdate({ impactStatement: e.target.value })}
-                                className="w-full p-3 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-pink-500 outline-none transition-shadow resize-none bg-slate-50 focus:bg-white"
+                                className="w-full p-3 border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-pink-500 outline-none transition-shadow resize-none bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-slate-100"
                                 rows={3}
                                 placeholder="Describe functional impact..."
                             />
@@ -261,19 +261,19 @@ export const NeedsAdjustments: React.FC<Props> = ({ student, onAddEvidence }) =>
             </div>
 
             {/* 3. Strategy Bank */}
-            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
                 <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                        <div className="p-2 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-lg">
                             <Check className="w-5 h-5" />
                         </div>
                         <div>
-                            <h3 className="font-bold text-slate-800 text-lg">Active Adjustments</h3>
+                            <h3 className="font-bold text-slate-800 dark:text-slate-100 text-lg">Active Adjustments</h3>
                             <p className="text-xs text-slate-500">Select strategies currently implemented for this student.</p>
                         </div>
                     </div>
                     
-                    <label className={`flex items-center gap-2 cursor-pointer px-4 py-2 rounded-lg border transition-colors ${student.hasLearningPlan ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
+                    <label className={`flex items-center gap-2 cursor-pointer px-4 py-2 rounded-lg border transition-colors ${student.hasLearningPlan ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'}`}>
                         <input 
                             type="checkbox" 
                             checked={student.hasLearningPlan || false} 
@@ -296,22 +296,22 @@ export const NeedsAdjustments: React.FC<Props> = ({ student, onAddEvidence }) =>
                                     {strategies.map(strat => {
                                         const isActive = activeAdjIds.has(strat);
                                         return (
-                                            <div key={strat} className={`group flex items-center p-1 rounded-lg border transition-all ${isActive ? 'bg-emerald-50 border-emerald-200 shadow-sm' : 'bg-white border-slate-200 hover:border-slate-300'}`}>
+                                            <div key={strat} className={`group flex items-center p-1 rounded-lg border transition-all ${isActive ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 shadow-sm' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'}`}>
                                                 <button
                                                     onClick={() => toggleStrategy(strat, category)}
                                                     className="px-3 py-1.5 text-sm font-medium flex items-center gap-2 text-left"
                                                 >
-                                                    <div className={`w-4 h-4 rounded-full flex items-center justify-center border transition-colors ${isActive ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
+                                                    <div className={`w-4 h-4 rounded-full flex items-center justify-center border transition-colors ${isActive ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 group-hover:border-slate-400'}`}>
                                                         {isActive && <Check className="w-2.5 h-2.5" />}
                                                     </div>
-                                                    <span className={isActive ? 'text-emerald-900' : 'text-slate-600'}>{strat}</span>
+                                                    <span className={isActive ? 'text-emerald-900 dark:text-emerald-200' : 'text-slate-600 dark:text-slate-300'}>{strat}</span>
                                                 </button>
                                                 
                                                 {isActive && (
-                                                    <div className="pr-1 flex items-center border-l border-emerald-200 pl-1 ml-1">
+                                                    <div className="pr-1 flex items-center border-l border-emerald-200 dark:border-emerald-800 pl-1 ml-1">
                                                         <button 
                                                             onClick={() => onAddEvidence(strat)}
-                                                            className="text-[10px] bg-white text-emerald-600 px-2 py-1 rounded font-bold hover:bg-emerald-100 transition-colors border border-emerald-100 flex items-center gap-1"
+                                                            className="text-[10px] bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 px-2 py-1 rounded font-bold hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors border border-emerald-100 dark:border-emerald-900/50 flex items-center gap-1"
                                                         >
                                                             <Plus className="w-3 h-3" /> Proof
                                                         </button>

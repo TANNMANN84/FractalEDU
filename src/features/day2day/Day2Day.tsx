@@ -4,13 +4,14 @@ import { TimetableEditor } from './components/TimetableEditor';
 import { Daybook } from './components/DayBook';
 import { useAppStore } from '@/store';
 import { DaybookModal } from './components/DaybookModal';
-import { TimeSlot } from '@/types';
+import { TimeSlot, DaybookEntry } from '@/types';
 
 export const Day2Day: React.FC = () => {
   const { schoolStructure, classes, daybookEntries, students, setDaybookEntry } = useAppStore();
   const [activeTab, setActiveTab] = useState<'dashboard' | 'timetable' | 'daybook' | 'notes'>('dashboard');
   const [currentTime, setCurrentTime] = useState(new Date());
   const [editingReminder, setEditingReminder] = useState<{date: string, slot: TimeSlot, initialTab?: 'students' | 'tasks', focusId?: string} | null>(null);
+  const [showCompleted, setShowCompleted] = useState(false);
 
   // Update clock every minute
   useEffect(() => {
@@ -59,15 +60,36 @@ export const Day2Day: React.FC = () => {
   // Calculate Reminders
   const reminders = useMemo(() => {
     const allReminders: any[] = [];
-    daybookEntries.forEach(entry => {
+
+    // Helper to find class info
+    const getClassInfo = (slotId: string) => {
+        if (!schoolStructure) return { name: 'General', subject: '' };
+        for (const day of schoolStructure.days) {
+            const slot = day.slots.find(s => s.id === slotId);
+            if (slot) {
+                if (slot.classId) {
+                    const cls = classes.find(c => c.id === slot.classId);
+                    if (cls) return { name: cls.name, subject: cls.subject };
+                }
+                return { name: slot.name, subject: '' };
+            }
+        }
+        return { name: 'General', subject: '' };
+    };
+
+    daybookEntries.forEach((entry: DaybookEntry) => {
+        const { name: className, subject } = getClassInfo(entry.slotId);
+
         // Student Reminders
         if (entry.taggedStudents) {
             entry.taggedStudents.forEach(ts => {
-                if (ts.reminder && !ts.reminder.completed) {
+                if (ts.reminder) {
                     const student = students.find(s => s.id === ts.studentId);
                     allReminders.push({
                         ...ts.reminder,
                         studentName: student?.name || 'Unknown Student',
+                        className,
+                        subject,
                         entryDate: entry.date,
                         entryId: entry.id,
                         targetId: ts.studentId, // ID to focus on
@@ -80,22 +102,22 @@ export const Day2Day: React.FC = () => {
         // General Reminders
         if (entry.generalReminders) {
             entry.generalReminders.forEach(gr => {
-                if (!gr.completed) {
-                    allReminders.push({
-                        ...gr,
-                        studentName: 'General Task',
-                        entryDate: entry.date,
-                        entryId: entry.id,
-                        targetId: gr.id, // ID to focus on
-                        slotId: entry.slotId,
-                        type: 'general'
-                    });
-                }
+                allReminders.push({
+                    ...gr,
+                    studentName: 'General Task',
+                    className,
+                    subject,
+                    entryDate: entry.date,
+                    entryId: entry.id,
+                    targetId: gr.id, // ID to focus on
+                    slotId: entry.slotId,
+                    type: 'general'
+                });
             });
         }
     });
     return allReminders.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [daybookEntries, students]);
+  }, [daybookEntries, students, schoolStructure, classes]);
 
   const findSlot = (slotId: string) => {
       if (!schoolStructure) return undefined;
@@ -126,7 +148,7 @@ export const Day2Day: React.FC = () => {
       if (!originalEntry) return;
 
       // Create a shallow copy of the entry
-      const updatedEntry = { ...originalEntry };
+      const updatedEntry: DaybookEntry = { ...originalEntry };
       let changed = false;
 
       if (reminder.type === 'student' && originalEntry.taggedStudents) {
@@ -162,7 +184,7 @@ export const Day2Day: React.FC = () => {
       const originalEntry = daybookEntries.find(d => d.id === reminder.entryId);
       if (!originalEntry) return;
 
-      const updatedEntry = { ...originalEntry };
+      const updatedEntry: DaybookEntry = { ...originalEntry };
       let changed = false;
 
       if (reminder.type === 'student' && originalEntry.taggedStudents) {
@@ -192,6 +214,36 @@ export const Day2Day: React.FC = () => {
     { id: 'daybook', label: 'My Daybook', icon: BookOpen },
     { id: 'notes', label: 'My Notes & Reminders', icon: CheckSquare },
   ] as const;
+
+  const activeReminders = reminders.filter(r => !r.completed);
+  const visibleReminders = showCompleted ? reminders : activeReminders;
+
+  // Group reminders by date
+  const groupedReminders = useMemo(() => {
+      const groups = {
+          overdue: [] as any[],
+          today: [] as any[],
+          tomorrow: [] as any[],
+          upcoming: [] as any[]
+      };
+      
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      visibleReminders.forEach(r => {
+          const d = new Date(r.date);
+          d.setHours(0,0,0,0);
+          
+          if (d < today) groups.overdue.push(r);
+          else if (d.getTime() === today.getTime()) groups.today.push(r);
+          else if (d.getTime() === tomorrow.getTime()) groups.tomorrow.push(r);
+          else groups.upcoming.push(r);
+      });
+      
+      return groups;
+  }, [visibleReminders]);
 
   return (
     <div className="h-full flex flex-col space-y-6">
@@ -277,7 +329,7 @@ export const Day2Day: React.FC = () => {
             <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
               <h3 className="font-bold text-lg mb-4 text-slate-800 dark:text-slate-100">Quick Tasks</h3>
               <div className="space-y-3">
-                  {reminders.slice(0, 5).map((reminder) => (
+                  {activeReminders.slice(0, 5).map((reminder) => (
                       <div 
                           key={`${reminder.entryId}-${reminder.targetId}`} 
                           onClick={() => handleReminderClick(reminder)}
@@ -292,13 +344,20 @@ export const Day2Day: React.FC = () => {
                           </button>
                           <div>
                               <p className="text-sm font-bold text-slate-800 dark:text-slate-200 group-hover:text-brand-700 dark:group-hover:text-brand-400 transition-colors">{reminder.text}</p>
-                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
-                                  For: <span className="font-medium">{reminder.studentName}</span> • Due: {new Date(reminder.date).toLocaleDateString()}
+                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1 flex-wrap">
+                                  <span className="font-medium text-brand-600 dark:text-brand-400">{reminder.className}</span>
+                                  <span>•</span>
+                                  {reminder.type === 'student' ? (
+                                      <>For: <span className="font-medium">{reminder.studentName}</span></>
+                                  ) : (
+                                      <span>General Task</span>
+                                  )}
+                                  <span className="opacity-50">• {new Date(reminder.date).toLocaleDateString()}</span>
                               </p>
                           </div>
                       </div>
                   ))}
-                  {reminders.length === 0 && (
+                  {activeReminders.length === 0 && (
                       <div className="text-slate-500 text-sm italic">No pending tasks.</div>
                   )}
               </div>
@@ -316,42 +375,96 @@ export const Day2Day: React.FC = () => {
 
         {activeTab === 'notes' && (
           <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
-            <h3 className="font-bold text-lg mb-6 text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                <Bell className="w-5 h-5" /> Active Reminders
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {reminders.map((reminder) => (
-                    <div 
-                        key={`${reminder.entryId}-${reminder.targetId}`} 
-                        onClick={() => handleReminderClick(reminder)}
-                        className="p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm cursor-pointer hover:border-brand-300 dark:hover:border-brand-700 transition-all group"
-                    >
-                        <div className="flex justify-between items-start mb-2">
-                            <span className="text-xs font-bold px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded text-slate-600 dark:text-slate-300">
-                                {new Date(reminder.date).toLocaleDateString()}
-                            </span>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={(e) => deleteReminder(e, reminder)}
-                                    className="text-slate-400 hover:text-red-500 transition-colors"
-                                    title="Delete Reminder"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-                                <button
-                                    onClick={(e) => toggleReminderComplete(e, reminder)}
-                                    className="text-slate-400 hover:text-green-600 transition-colors"
-                                    title="Mark as complete"
-                                >
-                                    <CheckSquare className="w-4 h-4" />
-                                </button>
+            <div className="flex justify-between items-center mb-6">
+                <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                    <Bell className="w-5 h-5" /> {showCompleted ? 'All Reminders' : 'Active Reminders'}
+                </h3>
+                <button 
+                    onClick={() => setShowCompleted(!showCompleted)}
+                    className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors ${showCompleted ? 'bg-brand-100 text-brand-700 border-brand-200' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
+                >
+                    {showCompleted ? 'Hide Completed' : 'Show Completed'}
+                </button>
+            </div>
+            
+            <div className="space-y-8">
+                {(['overdue', 'today', 'tomorrow', 'upcoming'] as const).map(groupKey => {
+                    const group = groupedReminders[groupKey];
+                    if (group.length === 0) return null;
+                    
+                    const colors = {
+                        overdue: 'text-red-600 dark:text-red-400',
+                        today: 'text-brand-600 dark:text-brand-400',
+                        tomorrow: 'text-amber-600 dark:text-amber-400',
+                        upcoming: 'text-slate-600 dark:text-slate-400'
+                    };
+
+                    return (
+                        <div key={groupKey}>
+                            <h4 className={`font-bold text-xs uppercase tracking-wider mb-3 ${colors[groupKey]}`}>
+                                {groupKey} ({group.length})
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {group.map((reminder) => (
+                                    <div 
+                                        key={`${reminder.entryId}-${reminder.targetId}`} 
+                                        onClick={() => handleReminderClick(reminder)}
+                                        className={`p-4 bg-white dark:bg-slate-800 border rounded-xl shadow-sm cursor-pointer transition-all group flex flex-col ${
+                                            reminder.completed 
+                                                ? 'border-slate-200 dark:border-slate-700 opacity-60' 
+                                                : 'border-slate-200 dark:border-slate-700 hover:border-brand-300 dark:hover:border-brand-700'
+                                        }`}
+                                    >
+                                        <div className="flex justify-between items-start mb-3">
+                                            <span className={`text-[10px] font-bold px-2 py-1 rounded ${
+                                                new Date(reminder.date).getTime() < new Date().setHours(0,0,0,0) && !reminder.completed
+                                                    ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                                                    : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+                                            }`}>
+                                                {new Date(reminder.date).toLocaleDateString()}
+                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={(e) => deleteReminder(e, reminder)}
+                                                    className="text-slate-400 hover:text-red-500 transition-colors"
+                                                    title="Delete Reminder"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => toggleReminderComplete(e, reminder)}
+                                                    className="text-slate-400 hover:text-green-600 transition-colors"
+                                                    title={reminder.completed ? "Mark as incomplete" : "Mark as complete"}
+                                                >
+                                                    <CheckSquare className={`w-4 h-4 ${reminder.completed ? 'text-green-600 fill-green-100' : ''}`} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="flex-1">
+                                            <p className={`font-medium text-slate-800 dark:text-slate-200 mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 ${reminder.completed ? 'line-through' : ''}`}>{reminder.text}</p>
+                                            
+                                            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-2">
+                                                <span className="font-bold text-brand-600 dark:text-brand-400">{reminder.className}</span>
+                                                {reminder.subject && <span>• {reminder.subject}</span>}
+                                            </div>
+                                        </div>
+
+                                        {reminder.type === 'student' && (
+                                            <div className="mt-auto pt-3 border-t border-slate-100 dark:border-slate-700 flex items-center gap-2">
+                                                <div className="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                                                    {reminder.studentName.charAt(0)}
+                                                </div>
+                                                <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{reminder.studentName}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
                             </div>
                         </div>
-                        <p className="font-medium text-slate-800 dark:text-slate-200 mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400">{reminder.text}</p>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">Student: {reminder.studentName}</p>
-                    </div>
-                ))}
-                {reminders.length === 0 && <p className="text-slate-500 italic">No active reminders found.</p>}
+                    );
+                })}
+                {visibleReminders.length === 0 && <p className="text-slate-500 italic">No reminders found.</p>}
             </div>
           </div>
         )}
